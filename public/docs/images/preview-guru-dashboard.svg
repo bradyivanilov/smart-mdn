@@ -1,0 +1,60 @@
+<svg width="800" height="460" viewBox="0 0 800 460" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="460" rx="16" fill="#0F172A"/>
+  <rect x="20" y="20" width="760" height="420" rx="12" fill="#1E293B" stroke="#334155" stroke-width="2"/>
+  
+  <!-- Header App Bar -->
+  <rect x="40" y="40" width="720" height="50" rx="8" fill="#1E40AF"/>
+  <circle cx="65" cy="65" r="14" fill="#38BDF8"/>
+  <text x="60" y="70" font-family="Arial, sans-serif" font-size="12" font-weight="900" fill="#0F172A">SM</text>
+  <text x="90" y="68" font-family="Arial, sans-serif" font-size="15" font-weight="bold" fill="#FFFFFF">SMART MADANI - Dashboard Guru Deep Learning</text>
+  <rect x="630" y="52" width="110" height="26" rx="6" fill="#3B82F6"/>
+  <text x="645" y="69" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#FFFFFF">NIP Verified ✓</text>
+
+  <!-- Hero Guru Card -->
+  <rect x="40" y="105" width="460" height="100" rx="10" fill="#1E3A8A" stroke="#3B82F6" stroke-width="1.5"/>
+  <circle cx="85" cy="155" r="26" fill="#60A5FA"/>
+  <text x="75" y="162" font-family="Arial, sans-serif" font-size="20" fill="#1E293B">👤</text>
+  <text x="125" y="142" font-family="Arial, sans-serif" font-size="15" font-weight="bold" fill="#FFFFFF">Ahmad Fauzi, M.Pd.</text>
+  <text x="125" y="160" font-family="Arial, sans-serif" font-size="11" fill="#93C5FD">Matematika &amp; Informatika (Fase E)</text>
+  <rect x="125" y="168" width="130" height="20" rx="4" fill="#22C55E"/>
+  <text x="135" y="182" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#052E16">Presensi: 06:45 WIB ✓</text>
+
+  <!-- Quick Metrics -->
+  <rect x="515" y="105" width="245" height="100" rx="10" fill="#0F172A" stroke="#334155" stroke-width="1"/>
+  <text x="530" y="128" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#94A3B8">AKTIVITAS &amp; PORTOFOLIO</text>
+  <text x="530" y="165" font-family="Arial, sans-serif" font-size="28" font-weight="900" fill="#38BDF8">14 <tspan font-size="12" fill="#64748B">Jurnal</tspan></text>
+  <text x="640" y="165" font-family="Arial, sans-serif" font-size="28" font-weight="900" fill="#818CF8">6 <tspan font-size="12" fill="#64748B">Modul</tspan></text>
+  <text x="530" y="190" font-family="Arial, sans-serif" font-size="11" fill="#34D399">Refleksi Level 3 (Mahir) Kemendikdasmen</text>
+
+  <!-- Deep Learning Radar Matrix -->
+  <rect x="40" y="220" width="350" height="185" rx="10" fill="#0F172A" stroke="#334155" stroke-width="1"/>
+  <text x="55" y="242" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#FFFFFF">DEEP LEARNING MATRIX INDICATOR</text>
+  <polygon points="215,260 280,350 150,350" fill="#38BDF8" fill-opacity="0.2" stroke="#38BDF8" stroke-width="2"/>
+  <circle cx="215" cy="260" r="5" fill="#38BDF8"/>
+  <text x="180" y="255" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#60A5FA">Mindful (85%)</text>
+  <circle cx="280" cy="350" r="5" fill="#818CF8"/>
+  <text x="285" y="355" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#818CF8">Meaningful (90%)</text>
+  <circle cx="150" cy="350" r="5" fill="#34D399"/>
+  <text x="75" y="355" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#34D399">Joyful (92%)</text>
+  <text x="125" y="390" font-family="Arial, sans-serif" font-size="10" fill="#94A3B8">Agregat input KBM + Respon Suara Murid</text>
+
+  <!-- Jurnal Aktivitas Feed -->
+  <rect x="405" y="220" width="355" height="185" rx="10" fill="#0F172A" stroke="#334155" stroke-width="1"/>
+  <text x="420" y="242" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#FFFFFF">TIMELINE 4 PILAR KOMPETENSI</text>
+  
+  <rect x="420" y="255" width="325" height="42" rx="6" fill="#1E293B" stroke="#475569" stroke-width="1"/>
+  <text x="430" y="272" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#38BDF8">PEDAGOGIK • JOYFUL</text>
+  <text x="430" y="287" font-family="Arial, sans-serif" font-size="11" fill="#E2E8F0">Simulasi Aljabar Belanja Pasar Tradisional</text>
+
+  <rect x="420" y="305" width="325" height="42" rx="6" fill="#1E293B" stroke="#475569" stroke-width="1"/>
+  <text x="430" y="322" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#34D399">KEPRIBADIAN • MINDFUL</text>
+  <text x="430" y="337" font-family="Arial, sans-serif" font-size="11" fill="#E2E8F0">Penyambutan Budaya Senyum, Sapa, Salam (5S)</text>
+
+  <rect x="420" y="355" width="325" height="42" rx="6" fill="#1E293B" stroke="#475569" stroke-width="1"/>
+  <text x="430" y="372" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#818CF8">PROFESIONAL • MEANINGFUL</text>
+  <text x="430" y="387" font-family="Arial, sans-serif" font-size="11" fill="#E2E8F0">Lokakarya Nasional Integrasi AI KBM Fase E</text>
+
+  <!-- Bottom Nav Simulation -->
+  <rect x="250" y="420" width="300" height="25" rx="6" fill="#1E40AF"/>
+  <text x="270" y="437" font-family="Arial, sans-serif" font-size="10" font-weight="bold" fill="#FFFFFF">🏠 Beranda | 📋 Aktivitas | ✨ Karya | 📖 Refleksi | 👤 Profil</text>
+</svg>
