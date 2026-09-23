@@ -9,10 +9,11 @@ class AuthController extends BaseController
     public function login()
     {
         if (session()->get('is_logged_in')) {
-            return redirect()->to(base_url('dashboard'));
+            $role = session()->get('role');
+            return redirect()->to($role === 'kepala_sekolah' ? base_url('supervisor') : base_url('dashboard'));
         }
         return view('auth/login', [
-            'title' => 'Masuk Akun Guru - SMART MADANI',
+            'title' => 'Masuk Akun - SMART MADANI',
         ]);
     }
 
@@ -43,18 +44,18 @@ class AuthController extends BaseController
         $userId = $user['id'];
         $expiresIn = $authResponse['expires_in'] ?? 3600;
 
-        // Ambil data profile dari Supabase table profiles
-        $profileClient = new SupabaseClient($accessToken);
-        $profiles = $profileClient->query('profiles', [
+        // Ambil data profil dari Supabase table profiles via service role untuk memastikan data paling akurat
+        $profiles = $supabase->query('profiles', [
             'id' => 'eq.' . $userId,
             'select' => '*',
-        ]);
+            'limit' => 1,
+        ], true);
 
         $profileData = (is_array($profiles) && !empty($profiles[0])) ? $profiles[0] : null;
 
-        $fullName = $profileData['full_name'] ?? ($user['user_metadata']['full_name'] ?? 'Guru');
+        $fullName = $profileData['full_name'] ?? ($user['user_metadata']['full_name'] ?? 'Pengguna');
         $nip = $profileData['nip'] ?? ($user['user_metadata']['nip'] ?? '');
-        $role = $profileData['role'] ?? 'guru';
+        $role = $profileData['role'] ?? ($user['user_metadata']['role'] ?? 'guru');
         $subject = $profileData['subject_specialty'] ?? ($user['user_metadata']['subject_specialty'] ?? '');
         $avatarUrl = $profileData['avatar_url'] ?? null;
 
@@ -71,16 +72,21 @@ class AuthController extends BaseController
             'avatar_url' => $avatarUrl,
         ]);
 
-        return redirect()->to(base_url('dashboard'))->with('success', 'Selamat datang, ' . $fullName . '!');
+        if ($role === 'kepala_sekolah') {
+            return redirect()->to(base_url('supervisor'))->with('success', 'Selamat datang Kepala Sekolah, ' . $fullName . '!');
+        }
+
+        return redirect()->to(base_url('dashboard'))->with('success', 'Selamat datang Guru, ' . $fullName . '!');
     }
 
     public function register()
     {
         if (session()->get('is_logged_in')) {
-            return redirect()->to(base_url('dashboard'));
+            $role = session()->get('role');
+            return redirect()->to($role === 'kepala_sekolah' ? base_url('supervisor') : base_url('dashboard'));
         }
         return view('auth/register', [
-            'title' => 'Pendaftaran Akun Guru - SMART MADANI',
+            'title' => 'Pendaftaran Akun - SMART MADANI',
         ]);
     }
 
@@ -92,6 +98,11 @@ class AuthController extends BaseController
         $password = (string) $this->request->getPost('password');
         $subject = trim((string) $this->request->getPost('subject_specialty'));
         $phone = trim((string) $this->request->getPost('phone_number'));
+        $role = trim((string) $this->request->getPost('role')) ?: 'guru';
+
+        if (!in_array($role, ['guru', 'kepala_sekolah'], true)) {
+            $role = 'guru';
+        }
 
         if (empty($nip) || empty($fullName) || empty($email) || empty($password)) {
             return redirect()->back()->withInput()->with('error', 'NIP, Nama Lengkap, Email, dan Password wajib diisi.');
@@ -113,12 +124,7 @@ class AuthController extends BaseController
             return redirect()->back()->withInput()->with('error', 'NIP sudah terdaftar di sistem.');
         }
 
-        // 2. Daftar via Supabase Admin API (auto-confirm email)
-        $role = trim((string) $this->request->getPost('role')) ?: 'guru';
-        if (!in_array($role, ['guru', 'kepala_sekolah'])) {
-            $role = 'guru';
-        }
-
+        // 2. Daftar via Supabase Admin API (auto-confirm email + simpan metadata role)
         $signUpResponse = $supabase->adminCreateUser($email, $password, [
             'nip' => $nip,
             'full_name' => $fullName,
@@ -133,10 +139,12 @@ class AuthController extends BaseController
 
         $newUserId = $signUpResponse['id'] ?? ($signUpResponse['user']['id'] ?? null);
 
-        // 3. Pastikan row profile terisi
+        // 3. Jamin data profil tersimpan dengan role yang dipilih (update/upsert eksplisit)
         if ($newUserId) {
-            $supabase->insert('profiles', [
-                'id' => $newUserId,
+            // Update row yang dibuat oleh trigger Supabase
+            $supabase->update('profiles', [
+                'id' => 'eq.' . $newUserId,
+            ], [
                 'nip' => $nip,
                 'full_name' => $fullName,
                 'role' => $role,
@@ -145,7 +153,8 @@ class AuthController extends BaseController
             ], true);
         }
 
-        return redirect()->to(base_url('login'))->with('success', 'Akun ' . ($role === 'kepala_sekolah' ? 'Kepala Sekolah' : 'Guru') . ' berhasil dibuat dan langsung aktif! Silakan login.');
+        $roleLabel = ($role === 'kepala_sekolah') ? 'Kepala Sekolah' : 'Guru';
+        return redirect()->to(base_url('login'))->with('success', "Akun {$roleLabel} berhasil dibuat dan langsung aktif! Silakan masuk.");
     }
 
     public function logout()
