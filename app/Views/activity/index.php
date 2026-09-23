@@ -95,10 +95,17 @@
                         <span>Status Verifikasi:</span>
                     </span>
                     <span class="font-bold 
-                        <?= ($act['verification_status'] === 'approved') ? 'text-emerald-600' : 'text-amber-600' ?>">
+                        <?= ($act['verification_status'] === 'approved') ? 'text-emerald-600' : ($act['verification_status'] === 'revision' ? 'text-rose-600' : 'text-amber-600') ?>">
                         <?= strtoupper(esc($act['verification_status'])) ?>
                     </span>
                 </div>
+
+                <?php if (!empty($act['verification_notes'])): ?>
+                    <div class="mt-2 p-2.5 <?= ($act['verification_status'] === 'revision') ? 'bg-rose-50 border border-rose-200 text-rose-800' : 'bg-blue-50 border border-blue-200 text-blue-800' ?> rounded-xl text-xs">
+                        <strong class="block text-[10px] uppercase font-bold mb-0.5">Catatan Kepala Sekolah:</strong>
+                        <span><?= esc($act['verification_notes']) ?></span>
+                    </div>
+                <?php endif; ?>
             </div>
         <?php endforeach; ?>
     </div>

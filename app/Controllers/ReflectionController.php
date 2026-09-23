@@ -11,7 +11,7 @@ class ReflectionController extends BaseController
         $userId = session()->get('user_id');
         $supabase = new SupabaseClient();
 
-        // 1. Refleksi guru
+        // Refleksi guru
         $refRows = $supabase->query('teacher_reflections', [
             'user_id' => 'eq.' . $userId,
             'select' => '*',
@@ -19,19 +19,9 @@ class ReflectionController extends BaseController
         ]);
         $reflections = (!empty($refRows) && is_array($refRows) && !isset($refRows['error'])) ? $refRows : [];
 
-        // 2. Feedback dari murid (5 terbaru)
-        $fbRows = $supabase->query('student_feedbacks', [
-            'teacher_id' => 'eq.' . $userId,
-            'select' => '*',
-            'order' => 'created_at.desc',
-            'limit' => 5,
-        ]);
-        $feedbacks = (!empty($fbRows) && is_array($fbRows) && !isset($fbRows['error'])) ? $fbRows : [];
-
         return view('reflection/index', [
             'title' => 'Our Refleksi - Kemendikdasmen Framework',
             'reflections' => $reflections,
-            'feedbacks' => $feedbacks,
         ]);
     }
 
@@ -84,57 +74,5 @@ class ReflectionController extends BaseController
         }
 
         return redirect()->to(base_url('reflection'))->with('success', 'Jurnal Refleksi berhasil disimpan!');
-    }
-
-    // Endpoint publik murid untuk Student Feedback Pulse (Refleksi Suara Murid via QR Code)
-    public function studentPulse($teacherId)
-    {
-        $supabase = new SupabaseClient();
-        // Cek apakah guru valid
-        $teacherRows = $supabase->query('profiles', [
-            'id' => 'eq.' . $teacherId,
-            'select' => 'id,full_name,subject_specialty',
-            'limit' => 1,
-        ], true);
-
-        $teacher = (!empty($teacherRows) && is_array($teacherRows) && !isset($teacherRows['error'])) ? $teacherRows[0] : null;
-
-        return view('reflection/student_pulse', [
-            'title' => 'Suara Murid - SMART MADANI',
-            'teacherId' => $teacherId,
-            'teacher' => $teacher,
-        ]);
-    }
-
-    public function storeStudentPulse()
-    {
-        $supabase = new SupabaseClient();
-
-        $teacherId = $this->request->getPost('teacher_id');
-        $subjectName = trim((string) $this->request->getPost('subject_name'));
-        $gradeClass = trim((string) $this->request->getPost('grade_class'));
-        $joyfulScore = (int) $this->request->getPost('joyful_score');
-        $meaningfulScore = (int) $this->request->getPost('meaningful_score');
-        $mindfulScore = (int) $this->request->getPost('mindful_score');
-        $studentNote = trim((string) $this->request->getPost('student_note'));
-
-        if (empty($teacherId) || empty($joyfulScore) || empty($meaningfulScore) || empty($mindfulScore)) {
-            return redirect()->back()->withInput()->with('error', 'Lengkapi skor evaluasi pembelajaran.');
-        }
-
-        // Simpan via service role (akses publik siswa)
-        $supabase->insert('student_feedbacks', [
-            'teacher_id' => $teacherId,
-            'subject_name' => $subjectName,
-            'grade_class' => $gradeClass,
-            'joyful_score' => $joyfulScore,
-            'meaningful_score' => $meaningfulScore,
-            'mindful_score' => $mindfulScore,
-            'student_note' => $studentNote,
-        ], true);
-
-        return view('reflection/student_pulse_success', [
-            'title' => 'Terima Kasih - Suara Murid Tersimpan',
-        ]);
     }
 }

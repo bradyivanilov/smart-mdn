@@ -14,38 +14,41 @@ $routes->get('register', 'AuthController::register');
 $routes->post('register', 'AuthController::processRegister');
 $routes->get('logout', 'AuthController::logout');
 
-// Public Features (QR Student Pulse & e-CV Portfolio Guru)
-$routes->get('pulse/(:segment)', 'ReflectionController::studentPulse/$1');
-$routes->post('pulse/store', 'ReflectionController::storeStudentPulse');
+// Public Feature: e-CV Portofolio Publik Guru
 $routes->get('portfolio/(:segment)', 'DashboardController::publicPortfolio/$1');
 
-// Protected Routes (Guru & Kepala Sekolah)
+// Protected Routes (General Authenticated)
 $routes->group('', ['filter' => 'auth'], function($routes) {
-    // Dashboard & Profile
-    $routes->get('dashboard', 'DashboardController::index');
+    // Shared: Profil Pengguna & Repositori Karya
     $routes->get('profile', 'DashboardController::profile');
-
-    // Smart Attendance (Khusus Guru)
-    $routes->get('attendance', 'AttendanceController::index');
-    $routes->post('attendance/record', 'AttendanceController::record');
-
-    // Our Activity (Jurnal 4 Kompetensi)
-    $routes->get('activity', 'ActivityController::index');
-    $routes->get('activity/create', 'ActivityController::create');
-    $routes->post('activity/store', 'ActivityController::store');
-
-    // Our Creativity (Karya & Modul Ajar)
     $routes->get('creativity', 'CreativityController::index');
     $routes->get('creativity/create', 'CreativityController::create');
     $routes->post('creativity/store', 'CreativityController::store');
     $routes->post('creativity/like/(:num)', 'CreativityController::like/$1');
+});
 
-    // Our Refleksi (Kemendikdasmen Framework)
+// Protected: Khusus Guru
+$routes->group('', ['filter' => ['auth', 'role:guru']], function($routes) {
+    // Dashboard Guru
+    $routes->get('dashboard', 'DashboardController::index');
+
+    // Smart Attendance Guru (GPS + Kamera)
+    $routes->get('attendance', 'AttendanceController::index');
+    $routes->post('attendance/record', 'AttendanceController::record');
+
+    // Our Activity (Jurnal 4 Kompetensi Guru)
+    $routes->get('activity', 'ActivityController::index');
+    $routes->get('activity/create', 'ActivityController::create');
+    $routes->post('activity/store', 'ActivityController::store');
+
+    // Our Refleksi (Kemendikdasmen Framework 4 Level)
     $routes->get('reflection', 'ReflectionController::index');
     $routes->get('reflection/create', 'ReflectionController::create');
     $routes->post('reflection/store', 'ReflectionController::store');
+});
 
-    // Portal Kepala Sekolah / Supervisor
+// Protected: Khusus Kepala Sekolah / Supervisor
+$routes->group('', ['filter' => ['auth', 'role:kepala_sekolah']], function($routes) {
     $routes->get('supervisor', 'SupervisorController::index');
     $routes->get('supervisor/teachers', 'SupervisorController::teachers');
     $routes->get('supervisor/supervise/(:segment)', 'SupervisorController::createSupervision/$1');

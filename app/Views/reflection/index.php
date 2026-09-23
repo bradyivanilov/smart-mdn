@@ -16,48 +16,6 @@
         </a>
     </div>
 
-    <!-- Student Feedback Pulse Bar Banner -->
-    <div class="bg-gradient-to-r from-sky-600 to-blue-700 text-white rounded-3xl p-4 shadow-sm flex items-center justify-between gap-3">
-        <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center shrink-0">
-                <i data-lucide="qr-code" class="w-5 h-5 text-sky-200"></i>
-            </div>
-            <div>
-                <h3 class="font-bold text-sm">Student Feedback Pulse</h3>
-                <p class="text-[11px] text-sky-100">Bagikan link / QR refleksi cepat 3 pilar ke siswa</p>
-            </div>
-        </div>
-        <a href="<?= base_url('pulse/' . session()->get('user_id')) ?>" target="_blank"
-           class="px-3 py-1.5 bg-white text-blue-900 rounded-xl text-xs font-bold shadow hover:bg-sky-50 transition shrink-0">
-            Buka Form Siswa
-        </a>
-    </div>
-
-    <!-- Feedbacks dari Murid Terbaru -->
-    <?php if (!empty($feedbacks)): ?>
-        <div class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm">
-            <h3 class="font-bold text-xs text-slate-700 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                <i data-lucide="smile" class="w-4 h-4 text-amber-500"></i>
-                <span>Suara Murid Terakhir (Hasil Pulse QR)</span>
-            </h3>
-            <div class="space-y-2.5">
-                <?php foreach ($feedbacks as $fb): ?>
-                    <div class="p-3 bg-slate-50 rounded-2xl border border-slate-100 text-xs">
-                        <div class="flex items-center justify-between text-slate-500 text-[11px] mb-1">
-                            <span class="font-semibold text-slate-700"><?= esc($fb['grade_class'] ?? 'Kelas Siswa') ?> (<?= esc($fb['subject_name'] ?? 'Mata Pelajaran') ?>)</span>
-                            <div class="flex items-center gap-2">
-                                <span title="Joyful" class="text-sky-600 font-bold">😊 <?= $fb['joyful_score'] ?>/5</span>
-                                <span title="Meaningful" class="text-indigo-600 font-bold">💡 <?= $fb['meaningful_score'] ?>/5</span>
-                                <span title="Mindful" class="text-blue-600 font-bold">🎯 <?= $fb['mindful_score'] ?>/5</span>
-                            </div>
-                        </div>
-                        <p class="text-slate-700 italic">"<?= esc($fb['student_note'] ?? 'Siswa puas dengan pembelajaran.') ?>"</p>
-                    </div>
-                <?php endforeach; ?>
-            </div>
-        </div>
-    <?php endif; ?>
-
     <!-- List Jurnal Refleksi -->
     <div class="space-y-4">
         <?php if (empty($reflections)): ?>
@@ -117,12 +75,17 @@
 
                 <!-- Feedback Kepala Sekolah bila ada -->
                 <?php if (!empty($ref['principal_feedback'])): ?>
-                    <div class="p-3 bg-blue-50/70 border border-blue-200/80 rounded-2xl text-xs mt-2">
+                    <div class="p-3.5 bg-blue-50/70 border border-blue-200/80 rounded-2xl text-xs mt-2">
                         <div class="flex items-center gap-1.5 font-bold text-blue-900 text-[11px] uppercase mb-1">
                             <i data-lucide="message-square" class="w-3.5 h-3.5 text-blue-600"></i>
-                            <span>Catatan & Umpan Balik Kepala Sekolah / Supervisor</span>
+                            <span>Catatan & Umpan Balik Kepala Sekolah</span>
                         </div>
                         <p class="text-slate-700 italic"><?= nl2br(esc($ref['principal_feedback'])) ?></p>
+                    </div>
+                <?php else: ?>
+                    <div class="text-[11px] text-slate-400 italic flex items-center gap-1 pt-1">
+                        <i data-lucide="clock" class="w-3 h-3 text-slate-400"></i>
+                        <span>Menunggu telaah & catatan apresiasi Kepala Sekolah</span>
                     </div>
                 <?php endif; ?>
             </div>

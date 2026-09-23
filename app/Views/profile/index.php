@@ -12,24 +12,29 @@
         <h2 class="text-base font-bold text-slate-800"><?= esc($user['full_name']) ?></h2>
         <p class="text-xs text-slate-500 font-mono mt-0.5">NIP: <?= esc($user['nip']) ?></p>
         <span class="inline-block mt-2 px-3 py-1 bg-blue-50 text-blue-800 border border-blue-200 text-xs font-semibold rounded-full">
-            <?= esc($user['subject_specialty']) ?>
+            <?= esc($user['subject_specialty'] ?: (session()->get('role') === 'kepala_sekolah' ? 'Kepala Sekolah / Pengawas' : 'Pendidik')) ?>
         </span>
 
-        <p class="text-xs text-slate-600 mt-3 max-w-sm mx-auto leading-relaxed italic">
-            "<?= esc($user['bio'] ?? 'Pendidik Deep Learning.') ?>"
-        </p>
+        <?php if (!empty($user['bio'])): ?>
+            <p class="text-xs text-slate-600 mt-3 max-w-sm mx-auto leading-relaxed italic">
+                "<?= esc($user['bio']) ?>"
+            </p>
+        <?php endif; ?>
 
         <div class="mt-4 pt-4 border-t border-slate-100 flex justify-center gap-3">
-            <a href="<?= base_url('portfolio/' . $user['nip']) ?>" target="_blank"
-               class="px-4 py-2 bg-blue-700 hover:bg-blue-800 text-white rounded-xl text-xs font-semibold shadow transition flex items-center gap-1.5">
-                <i data-lucide="external-link" class="w-4 h-4"></i>
-                <span>Lihat Portofolio Publik (e-CV)</span>
-            </a>
-            <a href="<?= base_url('pulse/' . $user['id']) ?>" target="_blank"
-               class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition flex items-center gap-1.5">
-                <i data-lucide="qr-code" class="w-4 h-4"></i>
-                <span>QR Murid</span>
-            </a>
+            <?php if (session()->get('role') === 'guru'): ?>
+                <a href="<?= base_url('portfolio/' . $user['nip']) ?>" target="_blank"
+                   class="px-4 py-2 bg-blue-700 hover:bg-blue-800 text-white rounded-xl text-xs font-semibold shadow transition flex items-center gap-1.5">
+                    <i data-lucide="external-link" class="w-4 h-4"></i>
+                    <span>Lihat Portofolio Publik (e-CV)</span>
+                </a>
+            <?php else: ?>
+                <a href="<?= base_url('supervisor') ?>"
+                   class="px-4 py-2 bg-blue-700 hover:bg-blue-800 text-white rounded-xl text-xs font-semibold shadow transition flex items-center gap-1.5">
+                    <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+                    <span>Kembali ke Portal Supervisi</span>
+                </a>
+            <?php endif; ?>
         </div>
     </div>
 
@@ -46,7 +51,7 @@
         </div>
         <div class="flex justify-between py-2">
             <span class="text-slate-500">Hak Akses Sistem</span>
-            <span class="font-bold text-blue-700 uppercase"><?= esc($user['role']) ?></span>
+            <span class="font-bold text-blue-700 uppercase"><?= esc($user['role'] === 'kepala_sekolah' ? 'Kepala Sekolah / Supervisor' : 'Guru (Pendidik)') ?></span>
         </div>
     </div>
 

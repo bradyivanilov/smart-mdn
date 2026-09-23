@@ -1,8 +1,10 @@
 -- ==============================================================================
--- SMART MADANI - SUPABASE POSTGRESQL SCHEMA (PRODUCTION & DYNAMIC)
+-- SMART MADANI - SUPABASE POSTGRESQL SCHEMA
+-- Eksekusi seluruh skrip ini di Supabase SQL Editor:
+-- Dashboard -> Project -> SQL Editor -> New Query -> Run
 -- ==============================================================================
 
--- 1. Tabel Profil Pengguna (Guru, Kepala Sekolah, Admin)
+-- 1. Tabel Profil Pengguna (Guru & Kepala Sekolah)
 CREATE TABLE IF NOT EXISTS public.profiles (
     id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
     nip VARCHAR(50) UNIQUE NOT NULL,
@@ -33,7 +35,7 @@ CREATE TABLE IF NOT EXISTS public.attendances (
     UNIQUE(user_id, attendance_date)
 );
 
--- 3. Tabel Jurnal Aktivitas 4 Kompetensi (Our Activity)
+-- 3. Tabel Jurnal Aktivitas 4 Kompetensi Guru (Our Activity)
 CREATE TABLE IF NOT EXISTS public.teacher_activities (
     id BIGSERIAL PRIMARY KEY,
     user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
@@ -50,7 +52,9 @@ CREATE TABLE IF NOT EXISTS public.teacher_activities (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 4. Tabel Repositori Modul & Inovasi Guru (Our Creativity)
+ALTER TABLE public.teacher_activities ADD COLUMN IF NOT EXISTS verification_notes TEXT;
+
+-- 4. Tabel Repositori Modul & Inovasi (Our Creativity)
 CREATE TABLE IF NOT EXISTS public.teacher_creativities (
     id BIGSERIAL PRIMARY KEY,
     user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
@@ -66,7 +70,7 @@ CREATE TABLE IF NOT EXISTS public.teacher_creativities (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 5. Tabel Our Refleksi (Kemendikdasmen Framework 4 Level)
+-- 5. Tabel Our Refleksi Guru (Kemendikdasmen Framework 4 Level)
 CREATE TABLE IF NOT EXISTS public.teacher_reflections (
     id BIGSERIAL PRIMARY KEY,
     user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
@@ -83,20 +87,7 @@ CREATE TABLE IF NOT EXISTS public.teacher_reflections (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 6. Tabel Suara Murid (Student Feedback Pulse - Anonim via QR Code)
-CREATE TABLE IF NOT EXISTS public.student_feedbacks (
-    id BIGSERIAL PRIMARY KEY,
-    teacher_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
-    subject_name VARCHAR(100),
-    grade_class VARCHAR(50),
-    joyful_score INT NOT NULL CHECK (joyful_score BETWEEN 1 AND 5),
-    meaningful_score INT NOT NULL CHECK (meaningful_score BETWEEN 1 AND 5),
-    mindful_score INT NOT NULL CHECK (mindful_score BETWEEN 1 AND 5),
-    student_note TEXT,
-    created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- 7. Tabel Supervisi & Asesmen Klinis Kepala Sekolah (PRD Section 4 Modul 5)
+-- 6. Tabel Supervisi & Asesmen Klinis KBM Kepala Sekolah (PRD Section 4 Modul 5)
 CREATE TABLE IF NOT EXISTS public.kbm_supervisions (
     id BIGSERIAL PRIMARY KEY,
     teacher_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
@@ -108,13 +99,20 @@ CREATE TABLE IF NOT EXISTS public.kbm_supervisions (
     score_personality NUMERIC(3,2) CHECK (score_personality BETWEEN 1.0 AND 4.0),
     score_social NUMERIC(3,2) CHECK (score_social BETWEEN 1.0 AND 4.0),
     score_professional NUMERIC(3,2) CHECK (score_professional BETWEEN 1.0 AND 4.0),
+    score_mindful NUMERIC(3,2) CHECK (score_mindful BETWEEN 1.0 AND 4.0),
+    score_meaningful NUMERIC(3,2) CHECK (score_meaningful BETWEEN 1.0 AND 4.0),
+    score_joyful NUMERIC(3,2) CHECK (score_joyful BETWEEN 1.0 AND 4.0),
     deep_learning_score NUMERIC(3,2) CHECK (deep_learning_score BETWEEN 1.0 AND 4.0),
     coaching_notes TEXT NOT NULL,
+    followup_action TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Trigger auto-insert profile
+-- Hapus tabel murid (student pulse) yang sudah tidak digunakan
+DROP TABLE IF EXISTS public.student_feedbacks CASCADE;
+
+-- Trigger auto-insert profile saat user didaftarkan di auth.users
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -131,7 +129,8 @@ BEGIN
         nip = EXCLUDED.nip,
         full_name = EXCLUDED.full_name,
         role = EXCLUDED.role,
-        subject_specialty = EXCLUDED.subject_specialty;
+        subject_specialty = EXCLUDED.subject_specialty,
+        phone_number = EXCLUDED.phone_number;
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -147,10 +146,9 @@ ALTER TABLE public.attendances ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.teacher_activities ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.teacher_creativities ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.teacher_reflections ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.student_feedbacks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.kbm_supervisions ENABLE ROW LEVEL SECURITY;
 
--- Public Read Profiles (untuk e-CV & nama guru)
+-- Profiles Policies
 DROP POLICY IF EXISTS "Public can view profiles" ON public.profiles;
 CREATE POLICY "Public can view profiles" ON public.profiles FOR SELECT USING (true);
 
@@ -160,21 +158,21 @@ CREATE POLICY "Users can update own profile" ON public.profiles FOR UPDATE USING
 DROP POLICY IF EXISTS "Service role full access profiles" ON public.profiles;
 CREATE POLICY "Service role full access profiles" ON public.profiles FOR ALL USING (auth.role() = 'service_role');
 
--- Attendances
+-- Attendances Policies
 DROP POLICY IF EXISTS "Users manage own attendance" ON public.attendances;
 CREATE POLICY "Users manage own attendance" ON public.attendances FOR ALL USING (auth.uid() = user_id);
 
 DROP POLICY IF EXISTS "Service role full access attendances" ON public.attendances;
 CREATE POLICY "Service role full access attendances" ON public.attendances FOR ALL USING (auth.role() = 'service_role');
 
--- Activities
+-- Activities Policies
 DROP POLICY IF EXISTS "Users manage own activities" ON public.teacher_activities;
 CREATE POLICY "Users manage own activities" ON public.teacher_activities FOR ALL USING (auth.uid() = user_id);
 
 DROP POLICY IF EXISTS "Service role full access activities" ON public.teacher_activities;
 CREATE POLICY "Service role full access activities" ON public.teacher_activities FOR ALL USING (auth.role() = 'service_role');
 
--- Creativities
+-- Creativities Policies
 DROP POLICY IF EXISTS "Anyone can view creativities" ON public.teacher_creativities;
 CREATE POLICY "Anyone can view creativities" ON public.teacher_creativities FOR SELECT USING (true);
 
@@ -184,20 +182,16 @@ CREATE POLICY "Users manage own creativities" ON public.teacher_creativities FOR
 DROP POLICY IF EXISTS "Service role full access creativities" ON public.teacher_creativities;
 CREATE POLICY "Service role full access creativities" ON public.teacher_creativities FOR ALL USING (auth.role() = 'service_role');
 
--- Reflections
+-- Reflections Policies
 DROP POLICY IF EXISTS "Users manage own reflections" ON public.teacher_reflections;
 CREATE POLICY "Users manage own reflections" ON public.teacher_reflections FOR ALL USING (auth.uid() = user_id);
 
 DROP POLICY IF EXISTS "Service role full access reflections" ON public.teacher_reflections;
 CREATE POLICY "Service role full access reflections" ON public.teacher_reflections FOR ALL USING (auth.role() = 'service_role');
 
--- Student feedbacks
-DROP POLICY IF EXISTS "Anyone can submit feedback" ON public.student_feedbacks;
-CREATE POLICY "Anyone can submit feedback" ON public.student_feedbacks FOR INSERT WITH CHECK (true);
+-- Supervisi Policies
+DROP POLICY IF EXISTS "Public can view supervisions" ON public.kbm_supervisions;
+CREATE POLICY "Public can view supervisions" ON public.kbm_supervisions FOR SELECT USING (true);
 
-DROP POLICY IF EXISTS "Service role full access feedbacks" ON public.student_feedbacks;
-CREATE POLICY "Service role full access feedbacks" ON public.student_feedbacks FOR ALL USING (auth.role() = 'service_role');
-
--- Supervisi
 DROP POLICY IF EXISTS "Service role full access supervisions" ON public.kbm_supervisions;
 CREATE POLICY "Service role full access supervisions" ON public.kbm_supervisions FOR ALL USING (auth.role() = 'service_role');

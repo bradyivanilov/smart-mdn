@@ -8,6 +8,11 @@ class DashboardController extends BaseController
 {
     public function index()
     {
+        // Jika kepala sekolah, redirect langsung ke portal supervisi
+        if (session()->get('role') === 'kepala_sekolah') {
+            return redirect()->to(base_url('supervisor'));
+        }
+
         $userId = session()->get('user_id');
         $supabase = new SupabaseClient();
 
@@ -26,7 +31,7 @@ class DashboardController extends BaseController
             'bio' => null,
         ];
 
-        // Update session jika nama/avatar berubah di DB
+        // Update session jika profil berubah
         if (!empty($user['full_name'])) {
             session()->set('full_name', $user['full_name']);
         }
@@ -50,9 +55,10 @@ class DashboardController extends BaseController
         $totalReflections = $supabase->count('teacher_reflections', ['user_id' => 'eq.' . $userId]);
 
         // 4. Hitung Indeks Deep Learning Radar (Mindful, Meaningful, Joyful)
+        // Berdasarkan aktivitas KBM guru dan skor asesmen supervisi Kepala Sekolah
         $actRows = $supabase->query('teacher_activities', [
             'user_id' => 'eq.' . $userId,
-            'select' => 'deep_learning_pillar',
+            'select' => 'deep_learning_pillar,verification_status',
         ]);
         $actList = (!empty($actRows) && is_array($actRows) && !isset($actRows['error'])) ? $actRows : [];
 
@@ -61,50 +67,38 @@ class DashboardController extends BaseController
         $joyfulCount = 0;
         foreach ($actList as $a) {
             $p = $a['deep_learning_pillar'] ?? '';
-            if ($p === 'mindful') $mindfulCount++;
-            elseif ($p === 'meaningful') $meaningfulCount++;
-            elseif ($p === 'joyful') $joyfulCount++;
+            $weight = ($a['verification_status'] === 'approved') ? 12 : 7;
+            if ($p === 'mindful') $mindfulCount += $weight;
+            elseif ($p === 'meaningful') $meaningfulCount += $weight;
+            elseif ($p === 'joyful') $joyfulCount += $weight;
             elseif ($p === 'integrated') {
-                $mindfulCount++;
-                $meaningfulCount++;
-                $joyfulCount++;
+                $mindfulCount += $weight;
+                $meaningfulCount += $weight;
+                $joyfulCount += $weight;
             }
         }
 
-        // Skor dari Suara Murid
-        $feedbacks = $supabase->query('student_feedbacks', [
+        // Ambil nilai dari supervisi klinis Kepala Sekolah
+        $supervisionRows = $supabase->query('kbm_supervisions', [
             'teacher_id' => 'eq.' . $userId,
-            'select' => 'joyful_score,meaningful_score,mindful_score',
-        ]);
-        $fbList = (!empty($feedbacks) && is_array($feedbacks) && !isset($feedbacks['error'])) ? $feedbacks : [];
+            'select' => 'deep_learning_score,score_pedagogic,score_personality,score_social,score_professional',
+            'order' => 'supervision_date.desc',
+            'limit' => 5,
+        ], true);
+        $supList = (!empty($supervisionRows) && is_array($supervisionRows) && !isset($supervisionRows['error'])) ? $supervisionRows : [];
 
-        $avgJoy = 0;
-        $avgMeaning = 0;
-        $avgMind = 0;
-        $fbCount = count($fbList);
-
-        if ($fbCount > 0) {
-            $sumJoy = array_sum(array_column($fbList, 'joyful_score'));
-            $sumMeaning = array_sum(array_column($fbList, 'meaningful_score'));
-            $sumMind = array_sum(array_column($fbList, 'mindful_score'));
-
-            $avgJoy = $sumJoy / $fbCount;
-            $avgMeaning = $sumMeaning / $fbCount;
-            $avgMind = $sumMind / $fbCount;
+        $supBonus = 0;
+        if (!empty($supList)) {
+            $avgDL = array_sum(array_column($supList, 'deep_learning_score')) / count($supList);
+            $supBonus = round(($avgDL / 4.0) * 40); // hingga 40 poin dari supervisi
         }
 
-        // Kalkulasi dinamis (jika belum ada data feedback/aktivitas, baseline = 0)
-        $mindfulIndex = ($fbCount > 0 || $mindfulCount > 0)
-            ? min(100, round(($avgMind * 15) + ($mindfulCount * 5)))
-            : 0;
-        $meaningfulIndex = ($fbCount > 0 || $meaningfulCount > 0)
-            ? min(100, round(($avgMeaning * 15) + ($meaningfulCount * 5)))
-            : 0;
-        $joyfulIndex = ($fbCount > 0 || $joyfulCount > 0)
-            ? min(100, round(($avgJoy * 15) + ($joyfulCount * 5)))
-            : 0;
+        // Skor akhir dinamis (0 - 100)
+        $mindfulIndex = ($mindfulCount > 0 || $supBonus > 0) ? min(100, $mindfulCount + $supBonus) : 0;
+        $meaningfulIndex = ($meaningfulCount > 0 || $supBonus > 0) ? min(100, $meaningfulCount + $supBonus) : 0;
+        $joyfulIndex = ($joyfulCount > 0 || $supBonus > 0) ? min(100, $joyfulCount + $supBonus) : 0;
 
-        // 5. Refleksi Terakhir
+        // 5. Refleksi Terakhir & Catatan Kepala Sekolah
         $latestRefRows = $supabase->query('teacher_reflections', [
             'user_id' => 'eq.' . $userId,
             'select' => '*',
@@ -152,7 +146,7 @@ class DashboardController extends BaseController
         ];
 
         return view('profile/index', [
-            'title' => 'Profil Guru - SMART MADANI',
+            'title' => 'Profil Pengguna - SMART MADANI',
             'user' => $user,
         ]);
     }

@@ -41,15 +41,18 @@ Matriks Refleksi Kompetensi Guru:
 - **Smart Attendance**: Presensi mandiri berbasis GPS HTML5 Geolocation + verifikasi swafoto kamera browser instan.
 - **Our Activity**: Jurnal harian KBM 4 pilar kompetensi (*Pedagogik, Kepribadian, Sosial, Profesional*) dilengkapi tagging pilar Deep Learning.
 - **Our Creativity**: E-Library repositori karya (Modul Ajar Deep Learning, Video Pembelajaran embed, LKPD kontekstual) dengan sistem apresiasi (*Like*).
-- **Our Refleksi**: Refleksi terstruktur pasca-KBM (*Situasi, Tantangan, Aksi Perbaikan, & Self-Assessment Level 1-4*).
-- **Student Feedback Pulse**: Instrumen micro-survey cepat 3 pilar untuk siswa via QR Code tanpa perlu login.
+- **Our Refleksi**: Refleksi terstruktur pasca-KBM (*Situasi, Tantangan, Aksi Perbaikan, & Self-Assessment Level 1-4 Kemendikdasmen*).
 - **Digital Teaching Portfolio (e-CV)**: Kartu portofolio publik guru yang tervalidasi dan siap cetak/simpan PDF untuk PKB.
 
-### B. Fitur Kepala Sekolah / Supervisor
-- **Executive Monitoring**: Monitoring persentase kehadiran guru harian dan jumlah KBM terlaksana secara realtime.
-- **Verifikasi Jurnal KBM**: Memberikan persetujuan (*Approve*) atau arahan perbaikan (*Revision*) pada aktivitas guru.
-- **Coaching & Feedback Refleksi**: Memberikan dialog apresiatif dan saran perbaikan terhadap refleksi KBM guru.
-- **Supervisi Klinis KBM**: Rubrik asesmen standar (skor 1.0 - 4.0) per 4 pilar kompetensi nasional plus indeks keterlaksanaan Deep Learning.
+### B. Fitur Khusus Kepala Sekolah / Supervisor
+- **Dashboard Supervisi (`/supervisor`)**: Monitoring kehadiran dewan guru secara realtime, antrean berkas jurnal KBM menunggu telaah, antrean refleksi guru menunggu arahan coaching, dan metrik supervisi sekolah.
+- **Verifikasi Jurnal Aktivitas**: Penelaahan isi dan bukti lampiran KBM guru dengan opsi keputusan *Setujui (Approved)* atau *Minta Revisi (Revision)* disertai catatan instruksi perbaikan.
+- **Umpan Balik Refleksi Guru**: Form coaching dialog apresiatif untuk menanggapi refleksi KBM 4 level Kemendikdasmen guru.
+- **Instrumen Asesmen Supervisi KBM Klinis (`/supervisor/supervise/{id}`)**: Rubrik asesmen standar (skor 1.0 - 4.0) untuk:
+  - 4 Kompetensi Standar: Pedagogik, Kepribadian, Sosial, Profesional.
+  - Indeks Keterlaksanaan Deep Learning (*Mindful, Meaningful, Joyful*).
+  - Catatan coaching dan rekomendasi tindak lanjut (follow-up action).
+- **Manajemen Guru (`/supervisor/teachers`)**: Pemantauan seluruh dewan guru (status presensi hari ini, frekuensi supervisi, rata-rata skor DL) dan akses cepat ke portofolio publik guru.
 
 ---
 
@@ -99,7 +102,7 @@ Jalankan Apache di XAMPP, lalu buka browser:
 - **Pendaftaran Akun Baru**: `http://localhost/smart-madani/public/register`
   *(Pilih peran sebagai Guru atau Kepala Sekolah)*
 - **Halaman Masuk**: `http://localhost/smart-madani/public/login`
-- **Suara Murid (Publik via QR)**: `http://localhost/smart-madani/public/pulse/{user_id}`
+- **Portal Supervisi Kepala Sekolah**: `http://localhost/smart-madani/public/supervisor`
 - **e-CV Portofolio Guru**: `http://localhost/smart-madani/public/portfolio/{nip}`
 
 ---
@@ -113,7 +116,7 @@ smart-madani/
 │   ├── Controllers/         # Auth, Dashboard, Attendance, Activity, Creativity, Reflection, Supervisor
 │   ├── Database/
 │   │   └── supabase_schema.sql  # Skema Master PostgreSQL Supabase
-│   ├── Filters/             # AuthFilter (JWT Session Validator)
+│   ├── Filters/             # AuthFilter & RoleFilter (Guru vs Kepala Sekolah RBAC)
 │   ├── Libraries/
 │   │   └── SupabaseClient.php   # Native Wrapper Supabase Auth & PostgREST
 │   └── Views/               # Antarmuka Responsif (Tailwind CSS)
@@ -124,8 +127,8 @@ smart-madani/
 │       ├── dashboard/       # Deep Learning Radar Matrix Chart
 │       ├── layouts/         # Master Layout & Bottom Navigation
 │       ├── profile/         # Profil & e-CV Guru
-│       ├── reflection/      # Refleksi Kemendikdasmen & Pulse Murid
-│       └── supervisor/      # Portal Asesmen Kepala Sekolah
+│       ├── reflection/      # Refleksi Kemendikdasmen 4 Level
+│       └── supervisor/      # Portal Supervisi Klinis & Asesmen Kepala Sekolah
 ├── public/
 │   ├── docs/images/         # Preview visual diagram & screenshot UI
 │   └── uploads/             # Direktori berkas bukti & foto presensi
