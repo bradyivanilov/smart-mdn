@@ -137,23 +137,24 @@
 
             <div class="space-y-3.5 max-h-[460px] overflow-y-auto pr-1">
                 <?php foreach ($pendingActivities as $act): ?>
+                    <?php if (!is_array($act) || empty($act['id'])) continue; ?>
                     <div class="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 text-xs space-y-2">
                         <div class="flex items-center justify-between">
-                            <a href="<?= base_url('supervisor/teacher/' . $act['user_id']) ?>" class="font-bold text-blue-900 hover:underline">
-                                <?= esc($act['profiles']['full_name'] ?? 'Guru') ?>
+                            <a href="<?= base_url('supervisor/teacher/' . ($act['user_id'] ?? '')) ?>" class="font-bold text-blue-900 hover:underline">
+                                <?= esc(is_array($act['profiles'] ?? null) ? ($act['profiles']['full_name'] ?? 'Guru') : 'Guru') ?>
                             </a>
-                            <span class="text-[10px] text-slate-400"><?= date('d M Y', strtotime($act['activity_date'])) ?></span>
+                            <span class="text-[10px] text-slate-400"><?= !empty($act['activity_date']) ? date('d M Y', strtotime($act['activity_date'])) : '' ?></span>
                         </div>
                         <div class="flex items-center gap-1.5">
                             <span class="px-2 py-0.5 bg-blue-100 text-blue-800 rounded-md text-[10px] font-bold uppercase">
-                                <?= esc($act['competency_type']) ?>
+                                <?= esc($act['competency_type'] ?? 'kbm') ?>
                             </span>
                             <span class="px-2 py-0.5 bg-sky-100 text-sky-800 rounded-md text-[10px] font-semibold">
-                                <?= ucfirst(esc($act['deep_learning_pillar'])) ?>
+                                <?= ucfirst(esc($act['deep_learning_pillar'] ?? 'integrated')) ?>
                             </span>
                         </div>
-                        <p class="font-semibold text-slate-800"><?= esc($act['title']) ?></p>
-                        <p class="text-slate-600 text-[11px] leading-relaxed"><?= nl2br(esc($act['description'])) ?></p>
+                        <p class="font-semibold text-slate-800"><?= esc($act['title'] ?? '') ?></p>
+                        <p class="text-slate-600 text-[11px] leading-relaxed"><?= nl2br(esc($act['description'] ?? '')) ?></p>
 
                         <?php if (!empty($act['evidence_file_url'])): ?>
                             <a href="<?= base_url($act['evidence_file_url']) ?>" target="_blank"
@@ -207,24 +208,25 @@
 
             <div class="space-y-3.5 max-h-[460px] overflow-y-auto pr-1">
                 <?php foreach ($pendingReflections as $ref): ?>
+                    <?php if (!is_array($ref) || empty($ref['id'])) continue; ?>
                     <div class="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 text-xs space-y-2">
                         <div class="flex items-center justify-between">
-                            <a href="<?= base_url('supervisor/teacher/' . $ref['user_id']) ?>" class="font-bold text-blue-900 hover:underline">
-                                <?= esc($ref['profiles']['full_name'] ?? 'Guru') ?>
+                            <a href="<?= base_url('supervisor/teacher/' . ($ref['user_id'] ?? '')) ?>" class="font-bold text-blue-900 hover:underline">
+                                <?= esc(is_array($ref['profiles'] ?? null) ? ($ref['profiles']['full_name'] ?? 'Guru') : 'Guru') ?>
                             </a>
                             <span class="px-2 py-0.5 bg-indigo-100 text-indigo-800 rounded-md text-[10px] font-bold">
-                                Level <?= $ref['competency_level'] ?> Kemendikdasmen
+                                Level <?= $ref['competency_level'] ?? 1 ?> Kemendikdasmen
                             </span>
                         </div>
                         <div class="space-y-1">
                             <p class="text-slate-700 text-[11px]">
-                                <strong class="text-blue-800">Situasi KBM:</strong> <?= esc($ref['situation_analysis']) ?>
+                                <strong class="text-blue-800">Situasi KBM:</strong> <?= esc($ref['situation_analysis'] ?? '') ?>
                             </p>
                             <p class="text-slate-700 text-[11px]">
-                                <strong class="text-amber-800">Tantangan:</strong> <?= esc($ref['challenge_identification']) ?>
+                                <strong class="text-amber-800">Tantangan:</strong> <?= esc($ref['challenge_identification'] ?? '') ?>
                             </p>
                             <p class="text-slate-700 text-[11px]">
-                                <strong class="text-emerald-800">Rencana Aksi:</strong> <?= esc($ref['action_plan']) ?>
+                                <strong class="text-emerald-800">Rencana Aksi:</strong> <?= esc($ref['action_plan'] ?? '') ?>
                             </p>
                         </div>
 

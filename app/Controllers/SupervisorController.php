@@ -43,7 +43,7 @@ class SupervisorController extends BaseController
             }
         }
 
-        // 3. Jurnal Aktivitas Menunggu Verifikasi (Gunakan explicit foreign key agar tidak error PGRST201)
+        // 3. Jurnal Aktivitas Menunggu Verifikasi (Explicit fkey agar tidak ambigu)
         $pendingActivities = $supabase->query('teacher_activities', [
             'verification_status' => 'eq.pending',
             'select' => '*,profiles!teacher_activities_user_id_fkey(id,full_name,nip,subject_specialty)',
@@ -51,33 +51,35 @@ class SupervisorController extends BaseController
             'limit' => 15,
         ], true);
 
-        // Fallback jika query relasi gagal
-        if (isset($pendingActivities['error'])) {
+        if (!is_array($pendingActivities) || isset($pendingActivities['error']) || isset($pendingActivities['code'])) {
             $pendingActivities = $supabase->query('teacher_activities', [
                 'verification_status' => 'eq.pending',
                 'select' => '*',
                 'order' => 'activity_date.desc,id.desc',
                 'limit' => 15,
             ], true);
-            // Manual hydrate nama guru jika perlu
             if (is_array($pendingActivities) && !isset($pendingActivities['error'])) {
                 $guruMap = array_column($gurus, null, 'id');
                 foreach ($pendingActivities as &$pa) {
-                    $pa['profiles'] = $guruMap[$pa['user_id']] ?? null;
+                    if (is_array($pa)) {
+                        $pa['profiles'] = $guruMap[$pa['user_id']] ?? null;
+                    }
                 }
                 unset($pa);
+            } else {
+                $pendingActivities = [];
             }
         }
 
-        // 4. Refleksi Menunggu Umpan Balik / Coaching Feedback
+        // 4. Refleksi Menunggu Umpan Balik / Coaching Feedback (Explicit fkey)
         $pendingReflections = $supabase->query('teacher_reflections', [
             'principal_feedback' => 'is.null',
-            'select' => '*,profiles(id,full_name,nip,subject_specialty)',
+            'select' => '*,profiles!teacher_reflections_user_id_fkey(id,full_name,nip,subject_specialty)',
             'order' => 'reflection_date.desc,id.desc',
             'limit' => 15,
         ], true);
 
-        if (isset($pendingReflections['error'])) {
+        if (!is_array($pendingReflections) || isset($pendingReflections['error']) || isset($pendingReflections['code'])) {
             $pendingReflections = $supabase->query('teacher_reflections', [
                 'principal_feedback' => 'is.null',
                 'select' => '*',
@@ -87,9 +89,13 @@ class SupervisorController extends BaseController
             if (is_array($pendingReflections) && !isset($pendingReflections['error'])) {
                 $guruMap = array_column($gurus, null, 'id');
                 foreach ($pendingReflections as &$pr) {
-                    $pr['profiles'] = $guruMap[$pr['user_id']] ?? null;
+                    if (is_array($pr)) {
+                        $pr['profiles'] = $guruMap[$pr['user_id']] ?? null;
+                    }
                 }
                 unset($pr);
+            } else {
+                $pendingReflections = [];
             }
         }
 
