@@ -3,15 +3,29 @@
 <?= $this->section('content') ?>
 <div class="space-y-6 max-w-4xl mx-auto pb-14">
 
+    <!-- Warning jika tabel kbm_supervisions belum dibuat di Supabase -->
+    <?php if (empty($supervisionTableReady)): ?>
+        <div class="p-4 bg-amber-50 border-2 border-amber-300 rounded-3xl text-amber-950 text-xs flex items-start gap-3 shadow-sm">
+            <i data-lucide="alert-triangle" class="w-5 h-5 text-amber-600 shrink-0 mt-0.5"></i>
+            <div>
+                <strong class="font-bold text-sm block">Tabel Supervisi Belum Dibuat di Supabase</strong>
+                <p class="mt-0.5 leading-relaxed text-amber-900">
+                    Tabel <code class="px-1.5 py-0.5 bg-amber-200/60 rounded font-mono font-bold">kbm_supervisions</code> belum aktif di skema database Supabase Anda. 
+                    Buka <strong>Supabase Dashboard &rarr; SQL Editor</strong>, salin isi file <code class="px-1.5 py-0.5 bg-amber-200/60 rounded font-mono font-bold">app/Database/supabase_schema.sql</code> lalu klik <strong>Run</strong> agar seluruh penilaian dan rapor supervisi tersimpan permanen.
+                </p>
+            </div>
+        </div>
+    <?php endif; ?>
+
     <!-- Header Banner Kepala Sekolah -->
     <div class="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 text-white rounded-3xl p-6 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
             <div class="inline-flex items-center gap-2 px-3 py-1 bg-amber-400/20 border border-amber-300/30 text-amber-200 rounded-full text-xs font-bold uppercase tracking-wider mb-2">
                 <i data-lucide="shield" class="w-3.5 h-3.5 text-amber-400"></i>
-                <span>Portal Supervisi Kepala Sekolah</span>
+                <span>Portal Supervisi Klinis Kepala Sekolah</span>
             </div>
             <h2 class="text-xl font-bold">Halo, <?= esc(session()->get('full_name')) ?></h2>
-            <p class="text-xs text-sky-200 mt-0.5">Monitoring KBM Berbasis 4 Kompetensi & Paradigma Deep Learning</p>
+            <p class="text-xs text-sky-200 mt-0.5">Monitoring KBM Berbasis 4 Kompetensi &amp; Paradigma Deep Learning</p>
         </div>
 
         <div class="flex items-center gap-2.5">
@@ -19,6 +33,11 @@
                class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold shadow transition flex items-center gap-1.5">
                 <i data-lucide="users" class="w-4 h-4"></i>
                 <span>Manajemen Guru</span>
+            </a>
+            <a href="<?= base_url('creativity') ?>" 
+               class="px-3.5 py-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5">
+                <i data-lucide="sparkles" class="w-4 h-4 text-sky-300"></i>
+                <span>Kurasi Modul</span>
             </a>
         </div>
     </div>
@@ -43,7 +62,7 @@
         </div>
     </div>
 
-    <!-- 1. Ringkasan Kehadiran Dewan Guru Hari Ini -->
+    <!-- 1. Monitoring Kehadiran Guru Hari Ini -->
     <div class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-3">
         <div class="flex items-center justify-between pb-2 border-b border-slate-100">
             <h3 class="font-bold text-slate-800 text-xs uppercase tracking-wider flex items-center gap-1.5">
@@ -56,16 +75,18 @@
         </div>
 
         <?php if (!empty($unattendedGurus)): ?>
-            <div class="p-3 bg-amber-50/80 border border-amber-200 rounded-2xl text-xs space-y-1">
+            <div class="p-3.5 bg-amber-50/80 border border-amber-200 rounded-2xl text-xs space-y-1.5">
                 <div class="font-bold text-amber-900 flex items-center gap-1">
                     <i data-lucide="alert-triangle" class="w-3.5 h-3.5 text-amber-600"></i>
                     <span>Belum Melakukan Presensi Hari Ini (<?= count($unattendedGurus) ?> Guru):</span>
                 </div>
                 <div class="flex flex-wrap gap-1.5 pt-1">
                     <?php foreach ($unattendedGurus as $ug): ?>
-                        <span class="px-2.5 py-1 bg-white border border-amber-300 text-amber-900 rounded-lg text-[11px] font-medium">
-                            <?= esc($ug['full_name']) ?> (<?= esc($ug['subject_specialty'] ?: 'Guru') ?>)
-                        </span>
+                        <a href="<?= base_url('supervisor/teacher/' . $ug['id']) ?>" 
+                           class="px-2.5 py-1 bg-white border border-amber-300 text-amber-900 hover:bg-amber-100 rounded-lg text-[11px] font-medium transition flex items-center gap-1">
+                            <span><?= esc($ug['full_name']) ?></span>
+                            <span class="text-[9px] text-slate-400">&bull; <?= esc($ug['subject_specialty'] ?: 'Guru') ?></span>
+                        </a>
                     <?php endforeach; ?>
                 </div>
             </div>
@@ -118,7 +139,9 @@
                 <?php foreach ($pendingActivities as $act): ?>
                     <div class="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 text-xs space-y-2">
                         <div class="flex items-center justify-between">
-                            <span class="font-bold text-blue-900"><?= esc($act['profiles']['full_name'] ?? 'Guru') ?></span>
+                            <a href="<?= base_url('supervisor/teacher/' . $act['user_id']) ?>" class="font-bold text-blue-900 hover:underline">
+                                <?= esc($act['profiles']['full_name'] ?? 'Guru') ?>
+                            </a>
                             <span class="text-[10px] text-slate-400"><?= date('d M Y', strtotime($act['activity_date'])) ?></span>
                         </div>
                         <div class="flex items-center gap-1.5">
@@ -143,7 +166,7 @@
                         <!-- Form Verifikasi dengan Catatan Revisi / Setujui -->
                         <form action="<?= base_url('supervisor/verify-activity/' . $act['id']) ?>" method="post" class="space-y-2 pt-2 border-t border-slate-200">
                             <?= csrf_field() ?>
-                            <input type="text" name="verification_notes" placeholder="Catatan perbaikan / apresiasi (opsional)..."
+                            <input type="text" name="verification_notes" placeholder="Catatan perbaikan / instruksi..."
                                    class="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none">
                             <div class="flex gap-2">
                                 <button type="submit" name="status" value="approved" 
@@ -186,7 +209,9 @@
                 <?php foreach ($pendingReflections as $ref): ?>
                     <div class="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 text-xs space-y-2">
                         <div class="flex items-center justify-between">
-                            <span class="font-bold text-blue-900"><?= esc($ref['profiles']['full_name'] ?? 'Guru') ?></span>
+                            <a href="<?= base_url('supervisor/teacher/' . $ref['user_id']) ?>" class="font-bold text-blue-900 hover:underline">
+                                <?= esc($ref['profiles']['full_name'] ?? 'Guru') ?>
+                            </a>
                             <span class="px-2 py-0.5 bg-indigo-100 text-indigo-800 rounded-md text-[10px] font-bold">
                                 Level <?= $ref['competency_level'] ?> Kemendikdasmen
                             </span>
@@ -206,7 +231,7 @@
                         <!-- Input Coaching Feedback Kepala Sekolah -->
                         <form action="<?= base_url('supervisor/feedback-reflection/' . $ref['id']) ?>" method="post" class="space-y-2 pt-2 border-t border-slate-200">
                             <?= csrf_field() ?>
-                            <textarea name="principal_feedback" required rows="2" placeholder="Tuliskan catatan coaching, apresiasi, dan arahan pedagogis..."
+                            <textarea name="principal_feedback" required rows="2" placeholder="Tuliskan catatan coaching dialog apresiatif..."
                                       class="w-full px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none"></textarea>
                             <button type="submit" class="w-full py-1.5 bg-blue-700 hover:bg-blue-800 text-white rounded-lg text-[11px] font-bold flex items-center justify-center gap-1 transition">
                                 <i data-lucide="send" class="w-3.5 h-3.5"></i>
@@ -257,9 +282,9 @@
                         <span class="px-2.5 py-1 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full font-bold text-[11px]">
                             Skor DL: <?= $sup['deep_learning_score'] ?>/4.0
                         </span>
-                        <span class="text-[10px] text-slate-400">
-                            Pedagogik: <?= $sup['score_pedagogic'] ?> &bull; Prof: <?= $sup['score_professional'] ?>
-                        </span>
+                        <a href="<?= base_url('supervisor/teacher/' . $sup['teacher_id']) ?>" class="text-[10px] text-blue-600 hover:underline">
+                            Lihat Lembar Audit &rarr;
+                        </a>
                     </div>
                 </div>
             <?php endforeach; ?>

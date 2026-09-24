@@ -49,10 +49,19 @@ $routes->group('', ['filter' => ['auth', 'role:guru']], function($routes) {
 
 // Protected: Khusus Kepala Sekolah / Supervisor
 $routes->group('', ['filter' => ['auth', 'role:kepala_sekolah']], function($routes) {
+    // Portal Supervisi & Manajemen Dewan Guru
     $routes->get('supervisor', 'SupervisorController::index');
     $routes->get('supervisor/teachers', 'SupervisorController::teachers');
+    $routes->get('supervisor/teacher/(:segment)', 'SupervisorController::teacherDetail/$1');
+
+    // Asesmen Observasi KBM Klinis
     $routes->get('supervisor/supervise/(:segment)', 'SupervisorController::createSupervision/$1');
     $routes->post('supervisor/store-supervision', 'SupervisorController::storeSupervision');
+
+    // Verifikasi Jurnal KBM & Umpan Balik Refleksi
     $routes->post('supervisor/verify-activity/(:num)', 'SupervisorController::verifyActivity/$1');
     $routes->post('supervisor/feedback-reflection/(:num)', 'SupervisorController::feedbackReflection/$1');
+
+    // Kurasi Karya & Modul Ajar Guru
+    $routes->post('supervisor/curate-creativity/(:num)', 'SupervisorController::curateCreativity/$1');
 });
