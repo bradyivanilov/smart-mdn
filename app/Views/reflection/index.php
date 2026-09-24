@@ -9,12 +9,46 @@
             <h2 class="text-lg font-bold text-slate-800">Our Refleksi</h2>
             <p class="text-xs text-slate-500">Model Refleksi 4 Level Kemendikdasmen</p>
         </div>
-        <a href="<?= base_url('reflection/create') ?>" 
-           class="bg-blue-700 hover:bg-blue-800 text-white text-xs font-semibold py-2 px-3.5 rounded-xl shadow transition flex items-center gap-1.5">
-            <i data-lucide="pen-tool" class="w-4 h-4"></i>
-            <span>Tulis Refleksi</span>
-        </a>
+        <div class="flex items-center gap-2">
+            <a href="<?= base_url('reflection/peer-observation') ?>" 
+               class="px-3 py-2 bg-purple-50 hover:bg-purple-100 text-purple-800 border border-purple-200 text-xs font-bold rounded-xl shadow-xs transition flex items-center gap-1.5">
+                <i data-lucide="eye" class="w-4 h-4 text-purple-600"></i>
+                <span class="hidden sm:inline">Peer Observation</span>
+                <span class="sm:hidden">Peer</span>
+            </a>
+            <a href="<?= base_url('reflection/create') ?>" 
+               class="bg-blue-700 hover:bg-blue-800 text-white text-xs font-bold py-2 px-3.5 rounded-xl shadow transition flex items-center gap-1.5">
+                <i data-lucide="pen-tool" class="w-4 h-4"></i>
+                <span>Tulis Refleksi</span>
+            </a>
+        </div>
     </div>
+
+    <!-- Catatan Observasi Masuk dari Rekan Sejawat -->
+    <?php if (!empty($peerNotes)): ?>
+        <div class="bg-white rounded-3xl p-5 border border-purple-200 shadow-sm space-y-3">
+            <div class="flex items-center justify-between border-b border-purple-100 pb-2">
+                <h3 class="font-bold text-purple-950 text-xs uppercase tracking-wider flex items-center gap-1.5">
+                    <i data-lucide="eye" class="w-4 h-4 text-purple-600"></i>
+                    <span>Masukan Observasi Rekan Sejawat Terkini</span>
+                </h3>
+                <a href="<?= base_url('reflection/peer-observation') ?>" class="text-[11px] font-bold text-purple-700 hover:underline">
+                    Lihat Semua &rarr;
+                </a>
+            </div>
+            <div class="space-y-2.5">
+                <?php foreach ($peerNotes as $pn): ?>
+                    <div class="p-3 bg-purple-50/60 rounded-2xl border border-purple-100 text-xs space-y-1">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-purple-950"><?= esc($pn['profiles']['full_name'] ?? 'Rekan Guru') ?></span>
+                            <span class="text-[10px] text-slate-400"><?= date('d M Y', strtotime($pn['observation_date'])) ?></span>
+                        </div>
+                        <p class="text-slate-700 italic">"<?= esc(mb_strimwidth($pn['constructive_feedback'], 0, 140, '...')) ?>"</p>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+    <?php endif; ?>
 
     <!-- List Jurnal Refleksi -->
     <div class="space-y-4">

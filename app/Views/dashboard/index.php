@@ -55,6 +55,41 @@
         </a>
     </div>
 
+    <!-- PUSAT AKSI CEPAT GURU (MOBILE & DESKTOP ACCESSIBLE) -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
+        <a href="<?= base_url('attendance') ?>" class="p-3 bg-white hover:bg-slate-50 border border-slate-200 rounded-2xl shadow-xs transition flex flex-col items-center text-center gap-1.5 group">
+            <div class="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center group-hover:scale-105 transition">
+                <i data-lucide="camera" class="w-4 h-4"></i>
+            </div>
+            <strong class="text-slate-800 text-xs">Presensi GPS</strong>
+            <span class="text-[10px] text-slate-400">Swafoto Kamera</span>
+        </a>
+
+        <a href="<?= base_url('activity/create') ?>" class="p-3 bg-white hover:bg-slate-50 border border-slate-200 rounded-2xl shadow-xs transition flex flex-col items-center text-center gap-1.5 group">
+            <div class="w-8 h-8 rounded-xl bg-blue-700 text-white flex items-center justify-center group-hover:scale-105 transition">
+                <i data-lucide="plus-circle" class="w-4 h-4"></i>
+            </div>
+            <strong class="text-slate-800 text-xs">Isi Jurnal KBM</strong>
+            <span class="text-[10px] text-slate-400">4 Kompetensi</span>
+        </a>
+
+        <a href="<?= base_url('reflection/peer-observation') ?>" class="p-3 bg-white hover:bg-slate-50 border border-slate-200 rounded-2xl shadow-xs transition flex flex-col items-center text-center gap-1.5 group">
+            <div class="w-8 h-8 rounded-xl bg-purple-600 text-white flex items-center justify-center group-hover:scale-105 transition">
+                <i data-lucide="eye" class="w-4 h-4"></i>
+            </div>
+            <strong class="text-slate-800 text-xs">Peer Observe</strong>
+            <span class="text-[10px] text-slate-400">Lesson Study</span>
+        </a>
+
+        <a href="<?= base_url('portfolio/' . $user['nip']) ?>" target="_blank" class="p-3 bg-white hover:bg-slate-50 border border-slate-200 rounded-2xl shadow-xs transition flex flex-col items-center text-center gap-1.5 group">
+            <div class="w-8 h-8 rounded-xl bg-indigo-700 text-white flex items-center justify-center group-hover:scale-105 transition">
+                <i data-lucide="printer" class="w-4 h-4"></i>
+            </div>
+            <strong class="text-slate-800 text-xs">Cetak e-CV</strong>
+            <span class="text-[10px] text-slate-400">Dokumen PKB</span>
+        </a>
+    </div>
+
     <!-- Deep Learning Matrix Indicator (Radar Chart Analytics - PRD Section 5.1) -->
     <div class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm">
         <div class="flex items-center justify-between mb-3">

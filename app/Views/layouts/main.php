@@ -208,12 +208,19 @@
         <!-- Topbar Desktop & Mobile Header -->
         <header class="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-slate-200 px-4 h-14 flex items-center justify-between shadow-xs no-print">
             <div class="flex items-center gap-3">
+                <?php if ($isLoggedIn): ?>
+                    <!-- Mobile Hamburger Button to Toggle Drawer -->
+                    <button type="button" onclick="toggleMobileDrawer()" class="md:hidden p-1.5 rounded-xl text-slate-600 hover:bg-slate-100 transition" title="Buka Menu Lengkap">
+                        <i data-lucide="menu" class="w-5 h-5"></i>
+                    </button>
+                <?php endif; ?>
+
                 <!-- Mobile Logo -->
                 <div class="md:hidden flex items-center gap-2">
-                    <div class="w-8 h-8 rounded-lg bg-blue-700 text-white font-black text-sm flex items-center justify-center shadow">
+                    <div class="w-7 h-7 rounded-lg bg-blue-700 text-white font-black text-xs flex items-center justify-center shadow">
                         SM
                     </div>
-                    <span class="font-bold text-sm text-slate-800 tracking-tight">SMART MADANI</span>
+                    <span class="font-bold text-xs text-slate-800 tracking-tight">SMART MADANI</span>
                 </div>
 
                 <!-- Desktop Breadcrumb -->
@@ -229,15 +236,15 @@
             </div>
 
             <?php if ($isLoggedIn): ?>
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-2 sm:gap-3">
                     <span class="hidden sm:inline text-xs text-slate-500"><?= date('l, d F Y') ?></span>
-                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider
+                    <span class="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold uppercase tracking-wider
                         <?= $role === 'kepala_sekolah' ? 'bg-amber-100 text-amber-800 border border-amber-300' : 'bg-blue-100 text-blue-800 border border-blue-200' ?>">
                         <?= $role === 'kepala_sekolah' ? 'Kepala Sekolah' : 'Guru' ?>
                     </span>
 
                     <a href="<?= base_url('profile') ?>" class="flex items-center gap-2 hover:opacity-80 transition">
-                        <img src="<?= $avatarUrl ?>" alt="Avatar" class="w-8 h-8 rounded-full object-cover border-2 border-slate-200">
+                        <img src="<?= $avatarUrl ?>" alt="Avatar" class="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border-2 border-slate-200">
                     </a>
 
                     <!-- Mobile Logout Icon -->
@@ -249,7 +256,7 @@
         </header>
 
         <!-- Flash Messages & Main Body -->
-        <main class="flex-1 px-4 py-5 max-w-6xl w-full mx-auto print-full">
+        <main class="flex-1 px-3 sm:px-4 py-4 sm:py-5 max-w-6xl w-full mx-auto print-full">
             <?php if (session()->getFlashdata('success')): ?>
                 <div class="mb-4 p-3 bg-emerald-50 border border-emerald-200 rounded-2xl text-emerald-800 text-xs flex items-center gap-2 shadow-xs">
                     <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600 shrink-0"></i>
@@ -269,17 +276,124 @@
     </div>
 
     <!-- ============================================================== -->
-    <!-- 2. MOBILE BOTTOM NAVIGATION (< 768px) -->
+    <!-- 2. MOBILE OFF-CANVAS / DRAWER MENU (Seluruh Fitur Desktop di HP) -->
     <!-- ============================================================== -->
     <?php if ($isLoggedIn): ?>
-        <nav class="md:hidden bottom-nav fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-t border-slate-200 py-1.5 px-3 no-print">
+        <div id="mobileDrawerBackdrop" onclick="toggleMobileDrawer()" class="fixed inset-0 bg-slate-950/60 z-50 hidden transition-opacity backdrop-blur-xs md:hidden"></div>
+        <div id="mobileDrawer" class="fixed top-0 bottom-0 left-0 w-72 bg-slate-900 text-white z-50 shadow-2xl transform -translate-x-full transition-transform duration-300 ease-in-out md:hidden flex flex-col sidebar-scroll overflow-y-auto">
+            <!-- Drawer Header -->
+            <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-blue-700 text-white font-black text-xs flex items-center justify-center shadow">
+                        SM
+                    </div>
+                    <div>
+                        <span class="text-xs font-bold text-white block">SMART MADANI</span>
+                        <span class="text-[9px] text-sky-400 font-semibold uppercase"><?= $role === 'kepala_sekolah' ? 'Supervisi Sekolah' : 'Pendidik Deep Learning' ?></span>
+                    </div>
+                </div>
+                <button type="button" onclick="toggleMobileDrawer()" class="p-1 rounded-lg text-slate-400 hover:text-white">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Drawer Profile -->
+            <div class="p-3 mx-3 my-2 rounded-xl bg-slate-800/70 border border-slate-700 flex items-center gap-2.5">
+                <img src="<?= $avatarUrl ?>" alt="Avatar" class="w-9 h-9 rounded-xl object-cover border border-sky-400">
+                <div class="overflow-hidden">
+                    <span class="text-xs font-bold text-white block truncate"><?= esc($fullName) ?></span>
+                    <span class="text-[10px] text-slate-400 block truncate"><?= $role === 'kepala_sekolah' ? 'Kepala Sekolah' : esc(session()->get('subject_specialty') ?: 'Guru') ?></span>
+                </div>
+            </div>
+
+            <!-- Drawer Links -->
+            <nav class="flex-1 px-3 py-2 space-y-1 text-xs">
+                <?php if ($role === 'kepala_sekolah'): ?>
+                    <div class="px-2 pt-1 pb-1 text-[9px] font-bold uppercase tracking-wider text-slate-500">Menu Supervisi Lengkap</div>
+                    <a href="<?= base_url('supervisor') ?>" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-200 hover:bg-slate-800">
+                        <i data-lucide="layout-dashboard" class="w-4 h-4 text-sky-400"></i>
+                        <span>Executive Dashboard</span>
+                    </a>
+                    <a href="<?= base_url('supervisor/teachers') ?>" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-200 hover:bg-slate-800">
+                        <i data-lucide="users" class="w-4 h-4 text-blue-400"></i>
+                        <span>Manajemen Dewan Guru</span>
+                    </a>
+                    <a href="<?= base_url('supervisor/schedules') ?>" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-200 hover:bg-slate-800">
+                        <i data-lucide="calendar" class="w-4 h-4 text-amber-400"></i>
+                        <span>Jadwal Supervisi KBM</span>
+                    </a>
+                    <a href="<?= base_url('supervisor/attendance-recap') ?>" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-200 hover:bg-slate-800">
+                        <i data-lucide="clipboard-check" class="w-4 h-4 text-emerald-400"></i>
+                        <span>Rekap Presensi &amp; Jam Mengajar</span>
+                    </a>
+                    <a href="<?= base_url('supervisor/coaching-plans') ?>" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-200 hover:bg-slate-800">
+                        <i data-lucide="target" class="w-4 h-4 text-purple-400"></i>
+                        <span>Pelacak RTL Coaching Supervisi</span>
+                    </a>
+                    <div class="px-2 pt-3 pb-1 text-[9px] font-bold uppercase tracking-wider text-slate-500">Koleksi &amp; Akun</div>
+                    <a href="<?= base_url('creativity') ?>" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-200 hover:bg-slate-800">
+                        <i data-lucide="sparkles" class="w-4 h-4 text-amber-300"></i>
+                        <span>Kurasi Modul Ajar</span>
+                    </a>
+                    <a href="<?= base_url('profile') ?>" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-200 hover:bg-slate-800">
+                        <i data-lucide="user" class="w-4 h-4 text-slate-400"></i>
+                        <span>Profil Pengguna</span>
+                    </a>
+                <?php else: ?>
+                    <div class="px-2 pt-1 pb-1 text-[9px] font-bold uppercase tracking-wider text-slate-500">Aktivitas Mengajar</div>
+                    <a href="<?= base_url('dashboard') ?>" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-200 hover:bg-slate-800">
+                        <i data-lucide="home" class="w-4 h-4 text-sky-400"></i>
+                        <span>Dashboard KBM</span>
+                    </a>
+                    <a href="<?= base_url('attendance') ?>" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-200 hover:bg-slate-800">
+                        <i data-lucide="camera" class="w-4 h-4 text-emerald-400"></i>
+                        <span>Smart Attendance GPS</span>
+                    </a>
+                    <a href="<?= base_url('activity') ?>" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-200 hover:bg-slate-800">
+                        <i data-lucide="clipboard-list" class="w-4 h-4 text-blue-400"></i>
+                        <span>Jurnal 4 Kompetensi</span>
+                    </a>
+                    <div class="px-2 pt-3 pb-1 text-[9px] font-bold uppercase tracking-wider text-slate-500">Pengembangan &amp; Kolaborasi</div>
+                    <a href="<?= base_url('creativity') ?>" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-200 hover:bg-slate-800">
+                        <i data-lucide="sparkles" class="w-4 h-4 text-amber-300"></i>
+                        <span>Our Creativity</span>
+                    </a>
+                    <a href="<?= base_url('reflection') ?>" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-200 hover:bg-slate-800">
+                        <i data-lucide="book-heart" class="w-4 h-4 text-rose-400"></i>
+                        <span>Our Refleksi Kemendikdasmen</span>
+                    </a>
+                    <a href="<?= base_url('reflection/peer-observation') ?>" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-200 hover:bg-slate-800">
+                        <i data-lucide="eye" class="w-4 h-4 text-purple-400"></i>
+                        <span>Peer Observation (Lesson Study)</span>
+                    </a>
+                    <a href="<?= base_url('profile') ?>" class="flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-200 hover:bg-slate-800">
+                        <i data-lucide="user" class="w-4 h-4 text-slate-400"></i>
+                        <span>Profil &amp; e-CV Resmi</span>
+                    </a>
+                <?php endif; ?>
+            </nav>
+
+            <div class="p-3 border-t border-slate-800">
+                <a href="<?= base_url('logout') ?>" class="flex items-center justify-center gap-2 px-3 py-2 bg-slate-800 text-slate-300 hover:bg-red-700/80 hover:text-white rounded-xl text-xs font-semibold transition">
+                    <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+                    <span>Keluar Akun</span>
+                </a>
+            </div>
+        </div>
+    <?php endif; ?>
+
+    <!-- ============================================================== -->
+    <!-- 3. MOBILE BOTTOM NAVIGATION (< 768px) -->
+    <!-- ============================================================== -->
+    <?php if ($isLoggedIn): ?>
+        <nav class="md:hidden bottom-nav fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200 py-1.5 px-3 no-print">
             <div class="max-w-md mx-auto grid <?= $role === 'kepala_sekolah' ? 'grid-cols-5' : 'grid-cols-5' ?> text-center text-xs">
                 <?php if ($role === 'kepala_sekolah'): ?>
                     <a href="<?= base_url('supervisor') ?>" class="flex flex-col items-center py-1 <?= ($uri1 === 'supervisor' && empty($uri2)) ? 'text-blue-700 font-bold' : 'text-slate-500' ?>">
                         <i data-lucide="layout-dashboard" class="w-5 h-5 mb-0.5"></i>
                         <span class="text-[10px]">Dashboard</span>
                     </a>
-                    <a href="<?= base_url('supervisor/teachers') ?>" class="flex flex-col items-center py-1 <?= ($uri1 === 'supervisor' && $uri2 === 'teachers') ? 'text-blue-700 font-bold' : 'text-slate-500' ?>">
+                    <a href="<?= base_url('supervisor/teachers') ?>" class="flex flex-col items-center py-1 <?= ($uri1 === 'supervisor' && in_array($uri2, ['teachers', 'teacher', 'supervise'])) ? 'text-blue-700 font-bold' : 'text-slate-500' ?>">
                         <i data-lucide="users" class="w-5 h-5 mb-0.5"></i>
                         <span class="text-[10px]">Guru</span>
                     </a>
@@ -291,31 +405,31 @@
                         <i data-lucide="sparkles" class="w-5 h-5 mb-0.5"></i>
                         <span class="text-[10px]">Kurasi</span>
                     </a>
-                    <a href="<?= base_url('profile') ?>" class="flex flex-col items-center py-1 <?= ($uri1 === 'profile') ? 'text-blue-700 font-bold' : 'text-slate-500' ?>">
-                        <i data-lucide="user" class="w-5 h-5 mb-0.5"></i>
-                        <span class="text-[10px]">Profil</span>
-                    </a>
+                    <button type="button" onclick="toggleMobileDrawer()" class="flex flex-col items-center py-1 text-slate-500 hover:text-blue-700">
+                        <i data-lucide="grid" class="w-5 h-5 mb-0.5"></i>
+                        <span class="text-[10px]">Lainnya</span>
+                    </button>
                 <?php else: ?>
                     <a href="<?= base_url('dashboard') ?>" class="flex flex-col items-center py-1 <?= in_array($uri1, ['dashboard', '']) ? 'text-blue-700 font-bold' : 'text-slate-500' ?>">
                         <i data-lucide="home" class="w-5 h-5 mb-0.5"></i>
                         <span class="text-[10px]">Beranda</span>
                     </a>
+                    <a href="<?= base_url('attendance') ?>" class="flex flex-col items-center py-1 <?= ($uri1 === 'attendance') ? 'text-blue-700 font-bold' : 'text-slate-500' ?>">
+                        <i data-lucide="camera" class="w-5 h-5 mb-0.5"></i>
+                        <span class="text-[10px]">Presensi</span>
+                    </a>
                     <a href="<?= base_url('activity') ?>" class="flex flex-col items-center py-1 <?= ($uri1 === 'activity') ? 'text-blue-700 font-bold' : 'text-slate-500' ?>">
                         <i data-lucide="clipboard-list" class="w-5 h-5 mb-0.5"></i>
                         <span class="text-[10px]">Aktivitas</span>
-                    </a>
-                    <a href="<?= base_url('creativity') ?>" class="flex flex-col items-center py-1 <?= ($uri1 === 'creativity') ? 'text-blue-700 font-bold' : 'text-slate-500' ?>">
-                        <i data-lucide="sparkles" class="w-5 h-5 mb-0.5"></i>
-                        <span class="text-[10px]">Karya</span>
                     </a>
                     <a href="<?= base_url('reflection') ?>" class="flex flex-col items-center py-1 <?= ($uri1 === 'reflection') ? 'text-blue-700 font-bold' : 'text-slate-500' ?>">
                         <i data-lucide="book-heart" class="w-5 h-5 mb-0.5"></i>
                         <span class="text-[10px]">Refleksi</span>
                     </a>
-                    <a href="<?= base_url('profile') ?>" class="flex flex-col items-center py-1 <?= ($uri1 === 'profile') ? 'text-blue-700 font-bold' : 'text-slate-500' ?>">
-                        <i data-lucide="user" class="w-5 h-5 mb-0.5"></i>
-                        <span class="text-[10px]">Profil</span>
-                    </a>
+                    <button type="button" onclick="toggleMobileDrawer()" class="flex flex-col items-center py-1 text-slate-500 hover:text-blue-700">
+                        <i data-lucide="grid" class="w-5 h-5 mb-0.5"></i>
+                        <span class="text-[10px]">Lainnya</span>
+                    </button>
                 <?php endif; ?>
             </div>
         </nav>
@@ -323,6 +437,20 @@
 
     <script>
         lucide.createIcons();
+
+        function toggleMobileDrawer() {
+            const drawer = document.getElementById('mobileDrawer');
+            const backdrop = document.getElementById('mobileDrawerBackdrop');
+            if (drawer && backdrop) {
+                if (drawer.classList.contains('-translate-x-full')) {
+                    drawer.classList.remove('-translate-x-full');
+                    backdrop.classList.remove('hidden');
+                } else {
+                    drawer.classList.add('-translate-x-full');
+                    backdrop.classList.add('hidden');
+                }
+            }
+        }
     </script>
 </body>
 </html>

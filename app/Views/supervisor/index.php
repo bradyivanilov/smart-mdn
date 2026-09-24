@@ -62,6 +62,50 @@
         </div>
     </div>
 
+    <!-- QUICK ACTIONS MODUL KEPALA SEKOLAH (RESPONSIVE MOBILE & DESKTOP) -->
+    <div class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-3">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+            <h3 class="font-bold text-xs uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+                <i data-lucide="layers" class="w-4 h-4 text-blue-700"></i>
+                <span>Pusat Kendali Supervisi Sekolah</span>
+            </h3>
+            <span class="text-[10px] text-slate-400 font-medium">Akses Cepat Seluruh Modul</span>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
+            <a href="<?= base_url('supervisor/teachers') ?>" class="p-3 bg-blue-50/70 hover:bg-blue-100/70 border border-blue-200 rounded-2xl transition flex flex-col items-center text-center gap-1.5 group">
+                <div class="w-8 h-8 rounded-xl bg-blue-700 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition">
+                    <i data-lucide="users" class="w-4 h-4"></i>
+                </div>
+                <strong class="text-blue-950 text-xs">Manajemen Guru</strong>
+                <span class="text-[10px] text-slate-500">Daftar &amp; Rapor 360°</span>
+            </a>
+
+            <a href="<?= base_url('supervisor/schedules') ?>" class="p-3 bg-amber-50/70 hover:bg-amber-100/70 border border-amber-200 rounded-2xl transition flex flex-col items-center text-center gap-1.5 group">
+                <div class="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition">
+                    <i data-lucide="calendar" class="w-4 h-4"></i>
+                </div>
+                <strong class="text-amber-950 text-xs">Jadwal Supervisi</strong>
+                <span class="text-[10px] text-slate-500">Kalender KBM Kelas</span>
+            </a>
+
+            <a href="<?= base_url('supervisor/attendance-recap') ?>" class="p-3 bg-emerald-50/70 hover:bg-emerald-100/70 border border-emerald-200 rounded-2xl transition flex flex-col items-center text-center gap-1.5 group">
+                <div class="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition">
+                    <i data-lucide="clipboard-check" class="w-4 h-4"></i>
+                </div>
+                <strong class="text-emerald-950 text-xs">Rekap Presensi</strong>
+                <span class="text-[10px] text-slate-500">Beban Jam &amp; Ekspor</span>
+            </a>
+
+            <a href="<?= base_url('supervisor/coaching-plans') ?>" class="p-3 bg-purple-50/70 hover:bg-purple-100/70 border border-purple-200 rounded-2xl transition flex flex-col items-center text-center gap-1.5 group">
+                <div class="w-8 h-8 rounded-xl bg-purple-600 text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition">
+                    <i data-lucide="target" class="w-4 h-4"></i>
+                </div>
+                <strong class="text-purple-950 text-xs">Pelacak RTL</strong>
+                <span class="text-[10px] text-slate-500">Komitmen Coaching</span>
+            </a>
+        </div>
+    </div>
+
     <!-- 1. Monitoring Kehadiran Guru Hari Ini -->
     <div class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm space-y-3">
         <div class="flex items-center justify-between pb-2 border-b border-slate-100">
