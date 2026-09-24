@@ -355,7 +355,21 @@ class SupervisorController extends BaseController
             return redirect()->back()->withInput()->with('error', 'Gagal menyimpan supervisi: ' . ($res['message'] ?? 'Pastikan tabel kbm_supervisions sudah dibuat di SQL Editor Supabase.'));
         }
 
-        return redirect()->to(base_url('supervisor/teacher/' . $teacherId))->with('success', 'Asesmen supervisi klinis KBM guru berhasil diterbitkan!');
+        // Simpan otomatis ke tabel coaching_action_plans jika followup_action diisi
+        $supervisionId = $res[0]['id'] ?? null;
+        $rtlDeadline = $this->request->getPost('rtl_deadline') ?: date('Y-m-d', strtotime('+14 days'));
+        if (!empty($followupAction)) {
+            $supabase->insert('coaching_action_plans', [
+                'supervision_id' => $supervisionId,
+                'teacher_id' => $teacherId,
+                'supervisor_id' => $supervisorId,
+                'action_item' => $followupAction,
+                'deadline' => $rtlDeadline,
+                'status' => 'open',
+            ], true);
+        }
+
+        return redirect()->to(base_url('supervisor/teacher/' . $teacherId))->with('success', 'Asesmen supervisi klinis KBM guru berhasil diterbitkan dan butir RTL berhasil dibuat!');
     }
 
     /**
@@ -452,5 +466,298 @@ class SupervisorController extends BaseController
 
         $statusMsg = $isFeatured ? 'disematkan sebagai Karya Terpilih Kurikulum!' : 'diperbarui status kurasinya.';
         return redirect()->back()->with('success', 'Modul ajar/karya guru berhasil ' . $statusMsg);
+    }
+
+    /**
+     * Kalender & Jadwal Supervisi Akademik Bulanan
+     */
+    public function schedules()
+    {
+        $supervisorId = session()->get('user_id');
+        $supabase = new SupabaseClient();
+
+        // Daftar seluruh dewan guru aktif
+        $guruList = $supabase->query('profiles', [
+            'role' => 'eq.guru',
+            'select' => 'id,full_name,nip,subject_specialty',
+            'order' => 'full_name.asc',
+        ], true);
+
+        // Daftar seluruh agenda supervisi terjadwal
+        $schedules = $supabase->query('supervision_schedules', [
+            'select' => '*,profiles!supervision_schedules_teacher_id_fkey(full_name,nip,subject_specialty)',
+            'order' => 'scheduled_date.asc,start_time.asc',
+        ], true);
+
+        if (!is_array($schedules) || isset($schedules['error'])) {
+            $schedules = $supabase->query('supervision_schedules', [
+                'select' => '*',
+                'order' => 'scheduled_date.asc',
+            ], true);
+            if (is_array($schedules) && !isset($schedules['error']) && is_array($guruList)) {
+                $gMap = array_column($guruList, null, 'id');
+                foreach ($schedules as &$sc) {
+                    $sc['profiles'] = $gMap[$sc['teacher_id']] ?? null;
+                }
+                unset($sc);
+            } else {
+                $schedules = [];
+            }
+        }
+
+        return view('supervisor/schedules', [
+            'title' => 'Kalender Supervisi Akademik - SMART MADANI',
+            'gurus' => is_array($guruList) && !isset($guruList['error']) ? $guruList : [],
+            'schedules' => is_array($schedules) ? $schedules : [],
+        ]);
+    }
+
+    /**
+     * Simpan Jadwal Baru Observasi KBM
+     */
+    public function storeSchedule()
+    {
+        $supervisorId = session()->get('user_id');
+        $teacherId = $this->request->getPost('teacher_id');
+        $scheduledDate = $this->request->getPost('scheduled_date');
+        $startTime = $this->request->getPost('start_time');
+        $endTime = $this->request->getPost('end_time');
+        $className = trim((string) $this->request->getPost('class_name'));
+        $subject = trim((string) $this->request->getPost('subject'));
+        $targetTopic = trim((string) $this->request->getPost('target_topic'));
+        $notes = trim((string) $this->request->getPost('notes'));
+
+        if (empty($teacherId) || empty($scheduledDate) || empty($startTime) || empty($endTime) || empty($className) || empty($subject)) {
+            return redirect()->back()->withInput()->with('error', 'Semua kolom wajib jadwal supervisi harus diisi.');
+        }
+
+        $supabase = new SupabaseClient();
+        $payload = [
+            'teacher_id' => $teacherId,
+            'supervisor_id' => $supervisorId,
+            'scheduled_date' => $scheduledDate,
+            'start_time' => $startTime,
+            'end_time' => $endTime,
+            'class_name' => $className,
+            'subject' => $subject,
+            'target_topic' => $targetTopic ?: null,
+            'notes' => $notes ?: null,
+            'status' => 'scheduled',
+        ];
+
+        $res = $supabase->insert('supervision_schedules', $payload, true);
+
+        if (isset($res['error']) && $res['error']) {
+            return redirect()->back()->withInput()->with('error', 'Gagal menyimpan jadwal: ' . ($res['message'] ?? 'Pastikan tabel supervision_schedules sudah dibuat di Supabase.'));
+        }
+
+        return redirect()->to(base_url('supervisor/schedules'))->with('success', 'Jadwal supervisi akademik berhasil ditetapkan!');
+    }
+
+    /**
+     * Update Status Jadwal Supervisi (completed, rescheduled, cancelled)
+     */
+    public function updateScheduleStatus($id)
+    {
+        $status = $this->request->getPost('status') ?: 'scheduled';
+        $supabase = new SupabaseClient();
+        $supabase->update('supervision_schedules', [
+            'id' => 'eq.' . $id,
+        ], [
+            'status' => $status,
+            'updated_at' => date('c'),
+        ], true);
+
+        return redirect()->back()->with('success', 'Status jadwal supervisi diperbarui menjadi ' . strtoupper($status));
+    }
+
+    /**
+     * Rekapitulasi Presensi & Jam Mengajar Bulanan Dewan Guru
+     */
+    public function attendanceRecap()
+    {
+        $month = (int) ($this->request->getGet('month') ?: date('n'));
+        $year = (int) ($this->request->getGet('year') ?: date('Y'));
+        $export = $this->request->getGet('export');
+
+        $supabase = new SupabaseClient();
+
+        // 1. Data seluruh guru
+        $guruList = $supabase->query('profiles', [
+            'role' => 'eq.guru',
+            'select' => 'id,full_name,nip,subject_specialty',
+            'order' => 'full_name.asc',
+        ], true);
+        $gurus = is_array($guruList) && !isset($guruList['error']) ? $guruList : [];
+
+        // 2. Rentang tanggal bulan ini
+        $startDate = sprintf('%04d-%02d-01', $year, $month);
+        $lastDay = date('t', strtotime($startDate));
+        $endDate = sprintf('%04d-%02d-%02d', $year, $month, $lastDay);
+
+        // Ambil data attendances periode ini
+        $attendances = $supabase->query('attendances', [
+            'attendance_date' => 'gte.' . $startDate,
+            'attendance_date' => 'lte.' . $endDate,
+            'select' => 'user_id,attendance_date,check_in_time,check_out_time,status',
+        ], true);
+        $attRows = is_array($attendances) && !isset($attendances['error']) ? $attendances : [];
+
+        // Kelompokkan per guru
+        $attByGuru = [];
+        foreach ($attRows as $a) {
+            $uId = $a['user_id'];
+            if (!isset($attByGuru[$uId])) {
+                $attByGuru[$uId] = [];
+            }
+            $attByGuru[$uId][] = $a;
+        }
+
+        // Hitung total hari kerja (Senin - Jumat) di bulan ini
+        $workDays = 0;
+        for ($d = 1; $d <= $lastDay; $d++) {
+            $w = date('N', strtotime(sprintf('%04d-%02d-%02d', $year, $month, $d)));
+            if ($w <= 5) $workDays++;
+        }
+        $workDays = max(1, $workDays);
+
+        $recap = [];
+        foreach ($gurus as $g) {
+            $logs = $attByGuru[$g['id']] ?? [];
+            $totalPresent = 0;
+            $totalLate = 0;
+            $totalPermit = 0;
+            $totalHours = 0;
+
+            foreach ($logs as $l) {
+                $st = $l['status'] ?? 'hadir';
+                if ($st === 'hadir') $totalPresent++;
+                elseif ($st === 'terlambat') {
+                    $totalPresent++;
+                    $totalLate++;
+                } elseif (in_array($st, ['izin', 'dinas_luar'])) {
+                    $totalPermit++;
+                }
+
+                // Estimasi jam mengajar per hari kehadiran (asumsi 6 jam/hari KBM)
+                if (in_array($st, ['hadir', 'terlambat'])) {
+                    $totalHours += 6;
+                }
+            }
+
+            $complianceRate = min(100, round(($totalPresent / $workDays) * 100));
+
+            $recap[] = [
+                'id' => $g['id'],
+                'full_name' => $g['full_name'],
+                'nip' => $g['nip'],
+                'subject_specialty' => $g['subject_specialty'],
+                'total_present' => $totalPresent,
+                'total_late' => $totalLate,
+                'total_permit' => $totalPermit,
+                'total_teaching_hours' => $totalHours,
+                'compliance_rate' => $complianceRate,
+            ];
+        }
+
+        // Jika minta ekspor CSV
+        if ($export === 'csv') {
+            header('Content-Type: text/csv');
+            header('Content-Disposition: attachment; filename="Rekap_Presensi_Guru_' . $month . '_' . $year . '.csv"');
+            $out = fopen('php://output', 'w');
+            fputcsv($out, ['NIP', 'Nama Guru', 'Mata Pelajaran', 'Total Hadir', 'Terlambat', 'Izin/Dinas', 'Total Jam KBM', 'Kepatuhan (%)']);
+            foreach ($recap as $r) {
+                fputcsv($out, [$r['nip'], $r['full_name'], $r['subject_specialty'], $r['total_present'], $r['total_late'], $r['total_permit'], $r['total_teaching_hours'], $r['compliance_rate'] . '%']);
+            }
+            fclose($out);
+            exit;
+        }
+
+        return view('supervisor/attendance_recap', [
+            'title' => 'Rekapitulasi Presensi & Jam Mengajar - SMART MADANI',
+            'selectedMonth' => $month,
+            'selectedYear' => $year,
+            'workDays' => $workDays,
+            'recap' => $recap,
+        ]);
+    }
+
+    /**
+     * Pelacak Rencana Tindak Lanjut Coaching (RTL)
+     */
+    public function coachingPlans()
+    {
+        $supabase = new SupabaseClient();
+
+        $plans = $supabase->query('coaching_action_plans', [
+            'select' => '*,profiles!coaching_action_plans_teacher_id_fkey(full_name,nip,subject_specialty)',
+            'order' => 'deadline.asc,status.asc',
+        ], true);
+
+        if (!is_array($plans) || isset($plans['error'])) {
+            $plans = $supabase->query('coaching_action_plans', [
+                'select' => '*',
+                'order' => 'deadline.asc',
+            ], true);
+            $plans = is_array($plans) && !isset($plans['error']) ? $plans : [];
+        }
+
+        return view('supervisor/coaching_plans', [
+            'title' => 'Pelacak RTL Coaching Supervisi - SMART MADANI',
+            'plans' => $plans,
+        ]);
+    }
+
+    /**
+     * Verifikasi RTL oleh Kepala Sekolah
+     */
+    public function verifyCoachingPlan($id)
+    {
+        $status = $this->request->getPost('status') ?: 'in_progress';
+        $verificationNotes = trim((string) $this->request->getPost('supervisor_verification'));
+
+        $supabase = new SupabaseClient();
+        $payload = [
+            'status' => $status,
+            'supervisor_verification' => $verificationNotes ?: null,
+            'resolved_at' => ($status === 'resolved') ? date('c') : null,
+            'updated_at' => date('c'),
+        ];
+
+        $supabase->update('coaching_action_plans', [
+            'id' => 'eq.' . $id,
+        ], $payload, true);
+
+        return redirect()->back()->with('success', 'Status RTL perbaikan kinerja guru berhasil diperbarui!');
+    }
+
+    /**
+     * Bulk Approval Jurnal Aktivitas KBM Guru (Verifikasi Massal)
+     */
+    public function bulkVerifyActivity()
+    {
+        $activityIds = $this->request->getPost('activity_ids');
+        $status = $this->request->getPost('bulk_status') ?: 'approved';
+        $supervisorId = session()->get('user_id');
+
+        if (empty($activityIds) || !is_array($activityIds)) {
+            return redirect()->back()->with('error', 'Pilih minimal satu jurnal aktivitas untuk diverifikasi massal.');
+        }
+
+        $supabase = new SupabaseClient();
+        $count = 0;
+        foreach ($activityIds as $id) {
+            $supabase->update('teacher_activities', [
+                'id' => 'eq.' . (int) $id,
+            ], [
+                'verification_status' => $status,
+                'verified_by' => $supervisorId,
+                'verification_notes' => 'Diverifikasi secara massal oleh Kepala Sekolah',
+                'updated_at' => date('c'),
+            ], true);
+            $count++;
+        }
+
+        return redirect()->back()->with('success', "Sebanyak {$count} jurnal aktivitas berhasil " . strtoupper($status) . '!');
     }
 }

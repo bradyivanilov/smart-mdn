@@ -1,5 +1,5 @@
 -- ==============================================================================
--- SMART MADANI - MASTER SUPABASE POSTGRESQL SCHEMA (AUDIT REVISION)
+-- SMART MADANI - MASTER SUPABASE POSTGRESQL SCHEMA (ENHANCED EXPANSION)
 -- ==============================================================================
 -- Buka Supabase: Dashboard -> Project -> SQL Editor -> New Query -> Tempel dan Jalankan (RUN).
 -- Skrip ini idempotent dan aman dijalankan ulang (IF NOT EXISTS & OR REPLACE).
@@ -45,6 +45,9 @@ CREATE TABLE IF NOT EXISTS public.teacher_activities (
     title VARCHAR(255) NOT NULL,
     description TEXT NOT NULL,
     deep_learning_pillar VARCHAR(30) DEFAULT 'integrated' CHECK (deep_learning_pillar IN ('mindful', 'meaningful', 'joyful', 'integrated')),
+    learning_objective TEXT,
+    differentiation_strategy TEXT,
+    contextual_problem TEXT,
     evidence_file_url TEXT,
     verification_status VARCHAR(20) DEFAULT 'pending' CHECK (verification_status IN ('pending', 'approved', 'revision')),
     verified_by UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
@@ -53,7 +56,9 @@ CREATE TABLE IF NOT EXISTS public.teacher_activities (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Pastikan kolom verification_notes ada jika tabel sudah terbuat sebelumnya
+ALTER TABLE public.teacher_activities ADD COLUMN IF NOT EXISTS learning_objective TEXT;
+ALTER TABLE public.teacher_activities ADD COLUMN IF NOT EXISTS differentiation_strategy TEXT;
+ALTER TABLE public.teacher_activities ADD COLUMN IF NOT EXISTS contextual_problem TEXT;
 ALTER TABLE public.teacher_activities ADD COLUMN IF NOT EXISTS verification_notes TEXT;
 ALTER TABLE public.teacher_activities ADD COLUMN IF NOT EXISTS verified_by UUID REFERENCES public.profiles(id) ON DELETE SET NULL;
 
@@ -91,6 +96,8 @@ CREATE TABLE IF NOT EXISTS public.teacher_reflections (
     challenge_identification TEXT NOT NULL,
     action_plan TEXT NOT NULL,
     competency_level INT DEFAULT 1 CHECK (competency_level BETWEEN 1 AND 4),
+    peer_mentor_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
+    evidence_url TEXT,
     principal_feedback TEXT,
     reviewed_by UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
     reviewed_at TIMESTAMPTZ,
@@ -98,10 +105,12 @@ CREATE TABLE IF NOT EXISTS public.teacher_reflections (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+ALTER TABLE public.teacher_reflections ADD COLUMN IF NOT EXISTS peer_mentor_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL;
+ALTER TABLE public.teacher_reflections ADD COLUMN IF NOT EXISTS evidence_url TEXT;
 ALTER TABLE public.teacher_reflections ADD COLUMN IF NOT EXISTS reviewed_by UUID REFERENCES public.profiles(id) ON DELETE SET NULL;
 ALTER TABLE public.teacher_reflections ADD COLUMN IF NOT EXISTS reviewed_at TIMESTAMPTZ;
 
--- 6. TABEL SUPERVISI & ASESMEN KLINIS KEPALA SEKOLAH (WAJIB DIBUAT)
+-- 6. TABEL SUPERVISI & ASESMEN KLINIS KEPALA SEKOLAH
 CREATE TABLE IF NOT EXISTS public.kbm_supervisions (
     id BIGSERIAL PRIMARY KEY,
     teacher_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
@@ -123,12 +132,60 @@ CREATE TABLE IF NOT EXISTS public.kbm_supervisions (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- Hapus tabel survei murid jika masih ada
+-- 7. TABEL KALENDER & JADWAL SUPERVISI AKADEMIK TERJADWAL
+CREATE TABLE IF NOT EXISTS public.supervision_schedules (
+    id BIGSERIAL PRIMARY KEY,
+    teacher_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+    supervisor_id UUID REFERENCES public.profiles(id) ON DELETE RESTRICT NOT NULL,
+    scheduled_date DATE NOT NULL,
+    start_time TIME NOT NULL,
+    end_time TIME NOT NULL,
+    class_name VARCHAR(50) NOT NULL,
+    subject VARCHAR(100) NOT NULL,
+    target_topic VARCHAR(255),
+    status VARCHAR(20) DEFAULT 'scheduled' CHECK (status IN ('scheduled', 'completed', 'rescheduled', 'cancelled')),
+    notes TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 8. TABEL RENCANA TINDAK LANJUT COACHING (RTL TRACKING)
+CREATE TABLE IF NOT EXISTS public.coaching_action_plans (
+    id BIGSERIAL PRIMARY KEY,
+    supervision_id BIGINT REFERENCES public.kbm_supervisions(id) ON DELETE CASCADE,
+    teacher_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+    supervisor_id UUID REFERENCES public.profiles(id) ON DELETE RESTRICT NOT NULL,
+    action_item TEXT NOT NULL,
+    deadline DATE NOT NULL,
+    status VARCHAR(20) DEFAULT 'open' CHECK (status IN ('open', 'in_progress', 'resolved')),
+    teacher_notes TEXT,
+    supervisor_verification TEXT,
+    resolved_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 9. TABEL PEER OBSERVATION (LESSON STUDY ANTARGURU)
+CREATE TABLE IF NOT EXISTS public.peer_observations (
+    id BIGSERIAL PRIMARY KEY,
+    host_teacher_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+    observer_teacher_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE NOT NULL,
+    observation_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    class_name VARCHAR(50) NOT NULL,
+    subject VARCHAR(100) NOT NULL,
+    mindful_notes TEXT,
+    meaningful_notes TEXT,
+    joyful_notes TEXT,
+    constructive_feedback TEXT NOT NULL,
+    status VARCHAR(20) DEFAULT 'submitted' CHECK (status IN ('draft', 'submitted', 'acknowledged')),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Hapus tabel survei murid jika ada
 DROP TABLE IF EXISTS public.student_feedbacks CASCADE;
 
--- ==============================================================================
--- TRIGGER AUTO-INSERT PROFILE DARI USER METADATA (DENGAN ROLE DINAMIS)
--- ==============================================================================
+-- TRIGGER AUTO-INSERT PROFILE DARI USER METADATA
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 DECLARE
@@ -173,6 +230,9 @@ ALTER TABLE public.teacher_activities ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.teacher_creativities ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.teacher_reflections ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.kbm_supervisions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.supervision_schedules ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.coaching_action_plans ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.peer_observations ENABLE ROW LEVEL SECURITY;
 
 -- 1. Profiles
 DROP POLICY IF EXISTS "Public can view profiles" ON public.profiles;
@@ -213,3 +273,23 @@ DROP POLICY IF EXISTS "Public can view supervisions" ON public.kbm_supervisions;
 CREATE POLICY "Public can view supervisions" ON public.kbm_supervisions FOR SELECT USING (true);
 DROP POLICY IF EXISTS "Service role full access supervisions" ON public.kbm_supervisions;
 CREATE POLICY "Service role full access supervisions" ON public.kbm_supervisions FOR ALL USING (auth.role() = 'service_role');
+
+-- 7. Schedules
+DROP POLICY IF EXISTS "Public read supervision_schedules" ON public.supervision_schedules;
+CREATE POLICY "Public read supervision_schedules" ON public.supervision_schedules FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Supervisors manage schedules" ON public.supervision_schedules;
+CREATE POLICY "Supervisors manage schedules" ON public.supervision_schedules FOR ALL USING (auth.role() = 'service_role' OR auth.uid() = supervisor_id);
+
+-- 8. Coaching Plans
+DROP POLICY IF EXISTS "Users view own coaching plans" ON public.coaching_action_plans;
+CREATE POLICY "Users view own coaching plans" ON public.coaching_action_plans FOR SELECT USING (auth.uid() = teacher_id OR auth.uid() = supervisor_id);
+DROP POLICY IF EXISTS "Manage coaching plans" ON public.coaching_action_plans;
+CREATE POLICY "Manage coaching plans" ON public.coaching_action_plans FOR ALL USING (auth.role() = 'service_role' OR auth.uid() = supervisor_id OR auth.uid() = teacher_id);
+
+-- 9. Peer Observations
+DROP POLICY IF EXISTS "Users view peer observations" ON public.peer_observations;
+CREATE POLICY "Users view peer observations" ON public.peer_observations FOR SELECT USING (auth.uid() = host_teacher_id OR auth.uid() = observer_teacher_id);
+DROP POLICY IF EXISTS "Observers create peer observations" ON public.peer_observations;
+CREATE POLICY "Observers create peer observations" ON public.peer_observations FOR INSERT WITH CHECK (auth.uid() = observer_teacher_id);
+DROP POLICY IF EXISTS "Manage peer observations" ON public.peer_observations;
+CREATE POLICY "Manage peer observations" ON public.peer_observations FOR ALL USING (auth.role() = 'service_role' OR auth.uid() = observer_teacher_id OR auth.uid() = host_teacher_id);

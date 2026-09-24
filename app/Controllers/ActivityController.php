@@ -27,7 +27,7 @@ class ActivityController extends BaseController
     public function create()
     {
         return view('activity/create', [
-            'title' => 'Catat Aktivitas KBM Baru',
+            'title' => 'Catat Jurnal KBM Deep Learning Baru',
         ]);
     }
 
@@ -42,8 +42,13 @@ class ActivityController extends BaseController
         $description = trim((string) $this->request->getPost('description'));
         $deepLearningPillar = $this->request->getPost('deep_learning_pillar') ?: 'integrated';
 
+        // 3 Parameter Pedagogis Baru
+        $learningObjective = trim((string) $this->request->getPost('learning_objective'));
+        $differentiationStrategy = trim((string) $this->request->getPost('differentiation_strategy'));
+        $contextualProblem = trim((string) $this->request->getPost('contextual_problem'));
+
         if (empty($title) || empty($description) || empty($competencyType)) {
-            return redirect()->back()->withInput()->with('error', 'Semua field wajib diisi.');
+            return redirect()->back()->withInput()->with('error', 'Judul, kompetensi, dan deskripsi aktivitas wajib diisi.');
         }
 
         // Handle File upload lokal XAMPP
@@ -59,21 +64,32 @@ class ActivityController extends BaseController
             $filePath = 'uploads/activities/' . $newName;
         }
 
-        $res = $supabase->insert('teacher_activities', [
+        $payload = [
             'user_id' => $userId,
             'activity_date' => $activityDate,
             'competency_type' => $competencyType,
             'title' => $title,
             'description' => $description,
             'deep_learning_pillar' => $deepLearningPillar,
+            'learning_objective' => $learningObjective ?: null,
+            'differentiation_strategy' => $differentiationStrategy ?: null,
+            'contextual_problem' => $contextualProblem ?: null,
             'evidence_file_url' => $filePath,
             'verification_status' => 'pending',
-        ]);
+        ];
+
+        $res = $supabase->insert('teacher_activities', $payload);
+
+        // Fallback jika kolom baru belum ada di Supabase
+        if (isset($res['error']) && $res['error']) {
+            unset($payload['learning_objective'], $payload['differentiation_strategy'], $payload['contextual_problem']);
+            $res = $supabase->insert('teacher_activities', $payload);
+        }
 
         if (isset($res['error']) && $res['error']) {
             return redirect()->back()->withInput()->with('error', 'Gagal menyimpan aktivitas: ' . ($res['message'] ?? 'Error Supabase'));
         }
 
-        return redirect()->to(base_url('activity'))->with('success', 'Jurnal aktivitas berhasil disimpan ke Supabase!');
+        return redirect()->to(base_url('activity'))->with('success', 'Jurnal aktivitas KBM berhasil disimpan dan masuk ke antrean verifikasi Kepala Sekolah!');
     }
 }

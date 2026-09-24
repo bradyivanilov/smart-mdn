@@ -45,6 +45,10 @@ $routes->group('', ['filter' => ['auth', 'role:guru']], function($routes) {
     $routes->get('reflection', 'ReflectionController::index');
     $routes->get('reflection/create', 'ReflectionController::create');
     $routes->post('reflection/store', 'ReflectionController::store');
+
+    // Peer Observation (Lesson Study Antarguru)
+    $routes->get('reflection/peer-observation', 'ReflectionController::peerObservations');
+    $routes->post('reflection/peer-observation/store', 'ReflectionController::storePeerObservation');
 });
 
 // Protected: Khusus Kepala Sekolah / Supervisor
@@ -54,12 +58,27 @@ $routes->group('', ['filter' => ['auth', 'role:kepala_sekolah']], function($rout
     $routes->get('supervisor/teachers', 'SupervisorController::teachers');
     $routes->get('supervisor/teacher/(:segment)', 'SupervisorController::teacherDetail/$1');
 
+    // Kalender & Jadwal Supervisi Terencana
+    $routes->get('supervisor/schedules', 'SupervisorController::schedules');
+    $routes->post('supervisor/schedules/store', 'SupervisorController::storeSchedule');
+    $routes->post('supervisor/schedules/update-status/(:num)', 'SupervisorController::updateScheduleStatus/$1');
+
+    // Rekapitulasi Presensi & Jam Mengajar Bulanan (Ekspor & Cetak)
+    $routes->get('supervisor/attendance-recap', 'SupervisorController::attendanceRecap');
+
+    // Pelacak RTL Coaching Action Plans
+    $routes->get('supervisor/coaching-plans', 'SupervisorController::coachingPlans');
+    $routes->post('supervisor/coaching-plans/verify/(:num)', 'SupervisorController::verifyCoachingPlan/$1');
+
     // Asesmen Observasi KBM Klinis
     $routes->get('supervisor/supervise/(:segment)', 'SupervisorController::createSupervision/$1');
     $routes->post('supervisor/store-supervision', 'SupervisorController::storeSupervision');
 
-    // Verifikasi Jurnal KBM & Umpan Balik Refleksi
+    // Verifikasi Jurnal KBM (Single & Bulk Approval)
     $routes->post('supervisor/verify-activity/(:num)', 'SupervisorController::verifyActivity/$1');
+    $routes->post('supervisor/bulk-verify-activity', 'SupervisorController::bulkVerifyActivity');
+
+    // Umpan Balik Refleksi Guru
     $routes->post('supervisor/feedback-reflection/(:num)', 'SupervisorController::feedbackReflection/$1');
 
     // Kurasi Karya & Modul Ajar Guru
