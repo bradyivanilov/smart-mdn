@@ -10,12 +10,21 @@ class CreativityController extends BaseController
     {
         $supabase = new SupabaseClient();
 
-        // Feed publik: ambil semua karya terbaru
+        // Feed publik: ambil semua karya terbaru (Explicit foreign key user_id agar tidak ambigu dengan curated_by)
         $rows = $supabase->query('teacher_creativities', [
-            'select' => '*,profiles(full_name,avatar_url)',
+            'select' => '*,profiles!teacher_creativities_user_id_fkey(full_name,avatar_url)',
             'order' => 'is_featured.desc,created_at.desc',
         ]);
-        $creativities = (!empty($rows) && is_array($rows) && !isset($rows['error'])) ? $rows : [];
+
+        if (!is_array($rows) || isset($rows['error']) || isset($rows['code'])) {
+            $rows = $supabase->query('teacher_creativities', [
+                'select' => '*',
+                'order' => 'is_featured.desc,created_at.desc',
+            ]);
+            $creativities = is_array($rows) && !isset($rows['error']) ? $rows : [];
+        } else {
+            $creativities = $rows;
+        }
 
         return view('creativity/index', [
             'title' => 'Our Creativity - E-Library & Modul Ajar',

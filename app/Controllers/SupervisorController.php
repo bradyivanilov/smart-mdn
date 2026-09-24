@@ -99,9 +99,9 @@ class SupervisorController extends BaseController
             }
         }
 
-        // 5. Karya & Modul Ajar Terbaru yang Butuh Kurasi
+        // 5. Karya & Modul Ajar Terbaru yang Butuh Kurasi (Explicit fkey)
         $recentCreativities = $supabase->query('teacher_creativities', [
-            'select' => '*,profiles(id,full_name,nip)',
+            'select' => '*,profiles!teacher_creativities_user_id_fkey(id,full_name,nip)',
             'order' => 'created_at.desc',
             'limit' => 6,
         ], true);

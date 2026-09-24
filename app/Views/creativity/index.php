@@ -37,12 +37,13 @@
         <?php endif; ?>
 
         <?php foreach ($creativities as $item): ?>
+            <?php if (!is_array($item) || empty($item['id'])) continue; ?>
             <div class="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm transition hover:shadow-md space-y-3">
                 <div class="flex items-start justify-between gap-2">
                     <div class="flex flex-wrap items-center gap-1.5">
                         <!-- Category Badge -->
                         <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-700">
-                            <?= str_replace('_', ' ', esc($item['category'])) ?>
+                            <?= str_replace('_', ' ', esc($item['category'] ?? 'karya')) ?>
                         </span>
 
                         <!-- Deep Learning Focus Badge -->
@@ -65,7 +66,7 @@
 
                 <div>
                     <h3 class="font-bold text-base text-slate-800 leading-snug">
-                        <?= esc($item['title']) ?>
+                        <?= esc($item['title'] ?? '') ?>
                     </h3>
 
                     <?php if (!empty($item['profiles']['full_name'])): ?>
