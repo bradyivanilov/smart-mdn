@@ -6,10 +6,16 @@
     <title><?= $title ?? 'SMART MADANI' ?></title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script>
         tailwind.config = {
             theme: {
                 extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+                    },
                     colors: {
                         primary: {
                             DEFAULT: '#1e40af', // royal blue
@@ -32,11 +38,15 @@
     <style>
         body {
             background-color: #f8fafc;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             -webkit-tap-highlight-color: transparent;
+            -webkit-font-smoothing: antialiased;
+        }
+        .tabular-nums {
+            font-variant-numeric: tabular-nums;
         }
         .bottom-nav {
-            box-shadow: 0 -4px 10px -2px rgba(15, 23, 42, 0.06);
+            box-shadow: 0 -4px 14px -2px rgba(15, 23, 42, 0.05);
         }
         .sidebar-scroll::-webkit-scrollbar {
             width: 4px;

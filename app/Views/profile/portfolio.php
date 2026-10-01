@@ -79,7 +79,7 @@
                 </div>
                 <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
                     <span class="text-[10px] font-bold text-slate-500 uppercase block">Status Portofolio</span>
-                    <strong class="text-base font-black text-emerald-700">Tervalidasi ✓</strong>
+                    <strong class="text-base font-black text-emerald-700">Tervalidasi</strong>
                 </div>
             </div>
 
